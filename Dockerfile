@@ -1,16 +1,13 @@
-# Dev image for the frontend workspace.
-# Build context is the repo root (workspace deps are hoisted there).
+# Dev image for the frontend.
 FROM node:22-bookworm-slim
 
 WORKDIR /app
 
-# Install the whole workspace from manifests only; cached until a manifest or
-# the lockfile changes. Source arrives via bind mount at runtime.
+# Install from manifests only so this layer caches until deps change.
+# Source arrives via bind mount at runtime.
 COPY package.json package-lock.json ./
-COPY frontend/package.json frontend/package.json
-COPY backend/package.json backend/package.json
-RUN npm install
+RUN npm ci
 
 EXPOSE 5173
 # --host makes Vite listen on 0.0.0.0 so the port is reachable from the host.
-CMD ["npm", "run", "dev", "-w", "frontend", "--", "--host"]
+CMD ["npm", "run", "dev", "--", "--host"]

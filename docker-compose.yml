@@ -1,25 +1,24 @@
-# Frontend only. Run from the frontend/ directory:
+# Frontend only. Run from this directory:
 #   docker network create footbar-net   # once, shared with the backend
 #   docker compose up --build
 #
-# The backend must be up on the same network (see backend/docker-compose.yml).
+# The backend must be up on the same network (see footbar-stats-backend).
 
 services:
   frontend:
     build:
-      context: ..                  # repo root — workspace deps are hoisted there
-      dockerfile: frontend/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     container_name: footbar-frontend
-    command: npm run dev -w frontend -- --host
+    command: npm run dev -- --host
     environment:
       # Vite dev-proxy target: reach the backend container by its network alias.
       VITE_PROXY_TARGET: https://backend:4000
     ports:
       - "5173:5173"
     volumes:
-      - ..:/app                    # live source for Vite HMR
+      - .:/app                     # live source for Vite HMR
       - /app/node_modules          # keep the image's installed deps
-      - /app/frontend/node_modules
     networks:
       default:
         aliases:
