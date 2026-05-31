@@ -1,0 +1,80 @@
+import { Link, useParams } from 'react-router-dom';
+import { useSession } from '../api/hooks.js';
+import { PaceZones } from '../components/PaceZones.js';
+import { SessionMap } from '../components/SessionMap.js';
+import { StatTile } from '../components/StatTile.js';
+import {
+  formatDateTime,
+  MATCH_TYPE_LABEL,
+  mToKm,
+  msToKmh,
+  pct,
+  positionLabel,
+  secToClock,
+} from '../lib/units.js';
+
+export function SessionDetail() {
+  const { id } = useParams<{ id: string }>();
+  const sessionId = Number(id);
+  const q = useSession(sessionId, Number.isFinite(sessionId));
+
+  if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
+  if (q.error) return <div className="text-red-400">{(q.error as Error).message}</div>;
+  if (!q.data) return null;
+  const s = q.data;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <Link to="/sessions" className="text-sm text-slate-400 hover:text-slate-200">
+          ← All sessions
+        </Link>
+        <h1 className="text-2xl font-semibold text-slate-100 mt-2">{s.title || 'Untitled'}</h1>
+        <div className="text-slate-400 text-sm mt-1">
+          {formatDateTime(s.start_date)} · {MATCH_TYPE_LABEL[s.match_type]} ·{' '}
+          {positionLabel(s.position)}
+          {typeof s.score_stars === 'number' && (
+            <span className="ml-3 text-brand">★ {s.score_stars.toFixed(1)}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatTile label="Distance" value={mToKm(s.distance)} />
+        <StatTile label="Playing time" value={secToClock(s.playing_time)} />
+        <StatTile label="Top sprint" value={msToKmh(s.sprint_speed)} />
+        <StatTile label="Top shot" value={msToKmh(s.shot_speed)} />
+        <StatTile
+          label="Sprints"
+          value={String(s.sprint_count)}
+          sublabel={`avg ${msToKmh(s.avg_sprint_speed)}`}
+        />
+        <StatTile
+          label="Shots"
+          value={String(s.shot_count)}
+          sublabel={`avg ${msToKmh(s.avg_shot_speed)}`}
+        />
+        <StatTile label="Passes" value={String(s.pass_count)} />
+        <StatTile label="Activity" value={pct(s.activity)} />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <StatTile label="High-speed running" value={mToKm(s.hsr_plus)} />
+        <StatTile label="Time with ball" value={secToClock(s.time_with_ball)} />
+        <StatTile
+          label="Acceleration"
+          value={s.acceleration ? `${s.acceleration.toFixed(2)} s to 18 km/h` : '—'}
+        />
+        <StatTile
+          label="Stop & go"
+          value={s.stop_and_go !== null ? s.stop_and_go.toFixed(1) : '—'}
+          sublabel="rhythm changes / 5 min"
+        />
+      </div>
+
+      {s.distance_5min && s.distance_5min.length > 0 && <PaceZones bins={s.distance_5min} />}
+
+      {s.location?.coordinates && <SessionMap location={s.location} />}
+    </div>
+  );
+}
