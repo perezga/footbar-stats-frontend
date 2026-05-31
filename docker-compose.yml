@@ -1,8 +1,9 @@
 # Frontend only. Run from this directory:
-#   docker network create footbar-net   # once, shared with the backend
 #   docker compose up --build
 #
-# The backend must be up on the same network (see footbar-stats-backend).
+# Fully self-contained: uses its own default network. It reaches the backend
+# through the host (host.docker.internal), so the backend just needs to be up
+# with port 4000 published — no shared network required.
 
 services:
   frontend:
@@ -12,19 +13,14 @@ services:
     container_name: footbar-frontend
     command: npm run dev -- --host
     environment:
-      # Vite dev-proxy target: reach the backend container by its network alias.
-      VITE_PROXY_TARGET: https://backend:4000
+      # Vite dev-proxy target: reach the backend via the host's published port.
+      VITE_PROXY_TARGET: https://host.docker.internal:4000
+    extra_hosts:
+      # Map host.docker.internal to the host gateway (required on Linux;
+      # already built-in on Docker Desktop for Mac/Windows).
+      - "host.docker.internal:host-gateway"
     ports:
       - "5173:5173"
     volumes:
       - .:/app                     # live source for Vite HMR
       - /app/node_modules          # keep the image's installed deps
-    networks:
-      default:
-        aliases:
-          - frontend
-
-networks:
-  default:
-    name: footbar-net
-    external: true

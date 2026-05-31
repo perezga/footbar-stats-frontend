@@ -35,14 +35,13 @@ Open <http://localhost:5173>, click **Connect Footbar**, grant consent, and you'
 
 ## Run with Docker
 
-The frontend and backend each have their own compose file and communicate over a shared external network:
+The frontend is fully self-contained — its own default network, no shared network setup:
 
 ```bash
-docker network create footbar-net   # once, shared with the backend
 docker compose up --build
 ```
 
-This sets `VITE_PROXY_TARGET=https://backend:4000` so the dev-proxy reaches the backend container by its network alias. The backend must be up on the same `footbar-net` network. Source is bind-mounted, so Vite HMR works the same as a native run.
+It sets `VITE_PROXY_TARGET=https://host.docker.internal:4000` so the dev-proxy reaches the backend through the host's published port (an `extra_hosts: host.docker.internal:host-gateway` entry makes this work on Linux too). The only requirement is that the backend is up with port `4000` published — the two services don't share a Docker network. Source is bind-mounted, so Vite HMR works the same as a native run.
 
 ## Pages
 
