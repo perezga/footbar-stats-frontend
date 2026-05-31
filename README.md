@@ -43,6 +43,14 @@ docker compose up --build
 
 It sets `VITE_PROXY_TARGET=https://host.docker.internal:4000` so the dev-proxy reaches the backend through the host's published port (an `extra_hosts: host.docker.internal:host-gateway` entry makes this work on Linux too). The only requirement is that the backend is up with port `4000` published — the two services don't share a Docker network. Source is bind-mounted, so Vite HMR works the same as a native run.
 
+### LAN access (reach the app from another machine by IP)
+
+The Vite dev server already listens on `0.0.0.0` (`--host`), so no frontend change
+is needed — just open the firewall for port `5173` and browse to
+`http://<SERVER_IP>:5173` from the other machine. The backend, however, needs a
+few changes for the OAuth flow to work by IP — see **LAN access** in the
+[backend README](https://github.com/perezga/footbar-stats-backend#lan-access-reach-the-app-from-another-machine-by-ip).
+
 ## Pages
 
 | Route | Page | What it shows |
