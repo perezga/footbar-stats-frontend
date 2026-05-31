@@ -48,10 +48,11 @@ This sets `VITE_PROXY_TARGET=https://backend:4000` so the dev-proxy reaches the 
 
 | Route | Page | What it shows |
 |---|---|---|
-| `/` | Dashboard | Profile summary + headline stats |
-| `/sessions` | Sessions | Your session history list |
-| `/sessions/:id` | Session detail | Per-session metrics + Leaflet pitch map |
-| `/settings` | Settings | Account / data controls |
+| `/login` | Login | Connect-Footbar sign-in |
+| `/` | Profile | Profile summary + headline stats |
+| `/sessions` | Sessions | Session history list (with match-type filter) |
+| `/sessions/:id` | SessionDetail | Per-session metrics + Leaflet pitch map |
+| `/stats` | Stats | Trends and personal records |
 
 ## Project structure
 
@@ -59,8 +60,9 @@ This sets `VITE_PROXY_TARGET=https://backend:4000` so the dev-proxy reaches the 
 src/
   main.tsx           App entry
   App.tsx            Router + layout
-  pages/             Dashboard, Sessions, SessionDetail, Settings
-  components/        Shared UI
+  pages/             Login, Profile, Sessions, SessionDetail, Stats
+  components/        Layout, StatTile, TrendChart, RecordsCard,
+                     PaceZones, MatchTypeFilter, SessionMap (Leaflet)
   api/
     client.ts        fetch wrapper (credentials: 'include')
     hooks.ts         TanStack Query hooks
