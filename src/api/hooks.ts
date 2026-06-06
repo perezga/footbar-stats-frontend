@@ -72,21 +72,22 @@ export function useSession(id: number, enabled: boolean) {
   });
 }
 
-export function useRecords(enabled: boolean) {
+export function useRecords(matchType: MatchType | undefined, enabled: boolean) {
+  const qs = matchType ? `?match_type=${matchType}` : '';
   return useQuery({
-    queryKey: ['records'],
-    queryFn: () => api<{ records: RecordEntry[] }>('/api/stats/records'),
+    queryKey: ['records', matchType ?? 'all'],
+    queryFn: () => api<{ records: RecordEntry[] }>(`/api/stats/records${qs}`),
     enabled,
   });
 }
 
-export function useTrend(metric: string, enabled: boolean) {
+export function useTrend(metric: string, matchType: MatchType | undefined, enabled: boolean) {
+  const params = new URLSearchParams({ metric });
+  if (matchType) params.set('match_type', matchType);
   return useQuery({
-    queryKey: ['trends', metric],
+    queryKey: ['trends', metric, matchType ?? 'all'],
     queryFn: () =>
-      api<{ metric: string; points: TrendPoint[] }>(
-        `/api/stats/trends?metric=${encodeURIComponent(metric)}`,
-      ),
+      api<{ metric: string; points: TrendPoint[] }>(`/api/stats/trends?${params.toString()}`),
     enabled,
   });
 }

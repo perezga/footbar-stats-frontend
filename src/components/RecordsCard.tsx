@@ -4,6 +4,7 @@ import { formatDate, mToKm, msToKmh, secToClock } from '../lib/units.js';
 
 interface Props {
   records: RecordEntry[];
+  title?: string;
 }
 
 function formatValue(metric: string, value: number): string {
@@ -13,10 +14,11 @@ function formatValue(metric: string, value: number): string {
   return Math.round(value).toString();
 }
 
-export function RecordsCard({ records }: Props) {
+export function RecordsCard({ records, title = 'Personal records' }: Props) {
   if (records.length === 0) {
     return (
       <div className="rounded-xl bg-brand-panel p-6 border border-slate-800 text-slate-400">
+        <div className="text-sm uppercase tracking-wider mb-2">{title}</div>
         No records yet — open a few sessions to populate stats.
       </div>
     );
@@ -24,7 +26,7 @@ export function RecordsCard({ records }: Props) {
   return (
     <div className="rounded-xl bg-brand-panel border border-slate-800 overflow-hidden">
       <div className="px-4 py-3 border-b border-slate-800 text-sm uppercase tracking-wider text-slate-400">
-        Personal records
+        {title}
       </div>
       <ul className="divide-y divide-slate-800">
         {records.map((r) => (
