@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuthStatus } from './api/hooks.js';
 import { Layout } from './components/Layout.js';
+import { League } from './pages/League.js';
 import { Login } from './pages/Login.js';
 import { Profile } from './pages/Profile.js';
 import { SessionDetail } from './pages/SessionDetail.js';
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="sessions" element={<Sessions />} />
         <Route path="sessions/:id" element={<SessionDetail />} />
         <Route path="stats" element={<Stats />} />
+        <Route path="league" element={<League />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

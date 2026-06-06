@@ -1,11 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client.js';
 import type {
+  Fixture,
   MatchType,
   Profile,
   RecordEntry,
+  RfafResponse,
+  Scorer,
   SessionDetail,
   SessionListResponse,
+  Standing,
   TrendPoint,
 } from './types.js';
 
@@ -84,6 +88,38 @@ export function useTrend(metric: string, enabled: boolean) {
         `/api/stats/trends?metric=${encodeURIComponent(metric)}`,
       ),
     enabled,
+  });
+}
+
+export function useStandings(enabled: boolean) {
+  return useQuery({
+    queryKey: ['rfaf', 'standings'],
+    queryFn: () => api<RfafResponse<Standing>>('/api/rfaf/standings'),
+    enabled,
+  });
+}
+
+export function useScorers(enabled: boolean) {
+  return useQuery({
+    queryKey: ['rfaf', 'scorers'],
+    queryFn: () => api<RfafResponse<Scorer>>('/api/rfaf/scorers'),
+    enabled,
+  });
+}
+
+export function useFixtures(enabled: boolean) {
+  return useQuery({
+    queryKey: ['rfaf', 'fixtures'],
+    queryFn: () => api<RfafResponse<Fixture>>('/api/rfaf/fixtures'),
+    enabled,
+  });
+}
+
+export function useRefreshRfaf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<{ ok: true }>('/api/rfaf/refresh', { method: 'POST' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['rfaf'] }),
   });
 }
 

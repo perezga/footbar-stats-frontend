@@ -86,3 +86,50 @@ export interface TrendPoint {
   title: string;
   value: number;
 }
+
+// --- RFAF league data ---
+
+export type RfafForm = 'W' | 'D' | 'L';
+
+export interface Standing {
+  position: number;
+  team: string;
+  codequipo: number | null;
+  points: number;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goals_for: number;
+  goals_against: number;
+  form: RfafForm[];
+  own?: boolean;
+}
+
+export interface Scorer {
+  rank: number;
+  player: string;
+  team: string;
+  group: string;
+  played: number;
+  goals: number;
+  penalties: number;
+  goals_per_game: number;
+  own?: boolean;
+}
+
+export interface Fixture {
+  matchday: number;
+  home: string;
+  away: string;
+  date: string | null;
+  time: string | null;
+  home_goals: number | null;
+  away_goals: number | null;
+  result: RfafForm | null;
+}
+
+export interface RfafResponse<T> {
+  results: T[];
+  fetched_at: number;
+}

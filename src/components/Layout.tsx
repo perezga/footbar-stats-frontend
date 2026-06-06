@@ -5,6 +5,7 @@ const tabs = [
   { to: '/', label: 'Profile' },
   { to: '/sessions', label: 'Sessions' },
   { to: '/stats', label: 'Stats' },
+  { to: '/league', label: 'League' },
 ];
 
 export function Layout() {
