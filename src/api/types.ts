@@ -28,6 +28,22 @@ export interface Profile {
   country_flag: string;
 }
 
+/** RFAF fixture linked to a session by date (fixture is the source of truth). */
+export interface SessionFixture {
+  matchday: number;
+  home: string;
+  away: string;
+  opponent: string;
+  is_home: boolean;
+  date: string | null;
+  time: string | null;
+  home_goals: number | null;
+  away_goals: number | null;
+  our_goals: number | null;
+  their_goals: number | null;
+  result: RfafForm | null;
+}
+
 export interface SessionListItem {
   id: number;
   start_date: string;
@@ -37,6 +53,7 @@ export interface SessionListItem {
   match_type: MatchType;
   position?: Position;
   score_stars?: number;
+  fixture?: SessionFixture;
 }
 
 export interface DistanceBin {

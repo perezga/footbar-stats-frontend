@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRefreshSessions, useSessions } from '../api/hooks.js';
 import type { MatchType } from '../api/types.js';
+import { MatchResult } from '../components/MatchResult.js';
 import { MatchTypeFilter } from '../components/MatchTypeFilter.js';
-import { formatDateTime, MATCH_TYPE_LABEL, positionLabel } from '../lib/units.js';
+import { formatDateTime, formatKickoff, MATCH_TYPE_LABEL, positionLabel } from '../lib/units.js';
 
 const PAGE_SIZE = 25;
 
@@ -53,13 +54,18 @@ export function Sessions() {
               <div>
                 <div className="text-slate-100 font-medium">{s.title || 'Untitled'}</div>
                 <div className="text-xs text-slate-400 mt-0.5">
-                  {formatDateTime(s.start_date)} ·{' '}
-                  {MATCH_TYPE_LABEL[s.match_type]} · {positionLabel(s.position)}
+                  {s.fixture
+                    ? formatKickoff(s.fixture.date, s.fixture.time)
+                    : formatDateTime(s.start_date)}{' '}
+                  · {MATCH_TYPE_LABEL[s.match_type]} · {positionLabel(s.position)}
                 </div>
               </div>
-              {typeof s.score_stars === 'number' && (
-                <div className="text-sm text-brand">★ {s.score_stars.toFixed(1)}</div>
-              )}
+              <div className="flex items-center gap-4">
+                {s.fixture && <MatchResult fixture={s.fixture} compact />}
+                {typeof s.score_stars === 'number' && (
+                  <div className="text-sm text-brand">★ {s.score_stars.toFixed(1)}</div>
+                )}
+              </div>
             </div>
           </Link>
         ))}

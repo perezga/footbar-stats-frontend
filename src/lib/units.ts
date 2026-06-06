@@ -1,4 +1,23 @@
-import type { MatchType, Position } from '../api/types.js';
+import type { MatchType, Position, RfafForm } from '../api/types.js';
+
+/** Tailwind background classes for a W/D/L result badge. */
+export const RESULT_STYLE: Record<RfafForm, string> = {
+  W: 'bg-green-600',
+  D: 'bg-yellow-500',
+  L: 'bg-red-600',
+};
+
+/** Format a fixture's official kickoff (date 'YYYY-MM-DD' + optional 'HH:MM'). */
+export function formatKickoff(date: string | null, time: string | null): string {
+  if (!date) return '—';
+  const d = new Date(`${date}T${time ?? '00:00'}`);
+  return d.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    ...(time ? { hour: '2-digit', minute: '2-digit' } : {}),
+  });
+}
 
 export function mToKm(m: number): string {
   if (m >= 1000) return (m / 1000).toFixed(2) + ' km';

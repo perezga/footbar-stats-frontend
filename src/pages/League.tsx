@@ -6,7 +6,7 @@ import {
   useStandings,
 } from '../api/hooks.js';
 import type { Fixture, RfafForm, Scorer, Standing } from '../api/types.js';
-import { formatDate } from '../lib/units.js';
+import { formatDate, RESULT_STYLE } from '../lib/units.js';
 
 type Tab = 'standings' | 'fixtures' | 'scorers';
 const TABS: { id: Tab; label: string }[] = [
@@ -15,11 +15,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'scorers', label: 'Top scorers' },
 ];
 
-const FORM_STYLE: Record<RfafForm, string> = {
-  W: 'bg-green-600',
-  D: 'bg-yellow-500',
-  L: 'bg-red-600',
-};
+const FORM_STYLE = RESULT_STYLE;
 
 function FormBadges({ form }: { form: RfafForm[] }) {
   return (

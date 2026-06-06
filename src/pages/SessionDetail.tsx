@@ -1,10 +1,12 @@
 import { Link, useParams } from 'react-router-dom';
 import { useSession } from '../api/hooks.js';
+import { MatchResult } from '../components/MatchResult.js';
 import { PaceZones } from '../components/PaceZones.js';
 import { SessionMap } from '../components/SessionMap.js';
 import { StatTile } from '../components/StatTile.js';
 import {
   formatDateTime,
+  formatKickoff,
   MATCH_TYPE_LABEL,
   mToKm,
   msToKmh,
@@ -31,13 +33,17 @@ export function SessionDetail() {
         </Link>
         <h1 className="text-2xl font-semibold text-slate-100 mt-2">{s.title || 'Untitled'}</h1>
         <div className="text-slate-400 text-sm mt-1">
-          {formatDateTime(s.start_date)} · {MATCH_TYPE_LABEL[s.match_type]} ·{' '}
-          {positionLabel(s.position)}
+          {s.fixture
+            ? formatKickoff(s.fixture.date, s.fixture.time)
+            : formatDateTime(s.start_date)}{' '}
+          · {MATCH_TYPE_LABEL[s.match_type]} · {positionLabel(s.position)}
           {typeof s.score_stars === 'number' && (
             <span className="ml-3 text-brand">★ {s.score_stars.toFixed(1)}</span>
           )}
         </div>
       </div>
+
+      {s.fixture && <MatchResult fixture={s.fixture} />}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatTile label="Distance" value={mToKm(s.distance)} />
