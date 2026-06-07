@@ -20,31 +20,32 @@ function ResultBadge({ result }: { result: SessionFixture['result'] }) {
  * line for list rows; the full form adds the matchday/venue context line.
  */
 export function MatchResult({ fixture, compact }: { fixture: SessionFixture; compact?: boolean }) {
-  const played = fixture.our_goals !== null && fixture.their_goals !== null;
-  const ourTeam = fixture.is_home ? fixture.home : fixture.away;
+  const played = fixture.home_goals !== null && fixture.away_goals !== null;
+  // Score follows the fixture name order: home on the left, away on the right —
+  // so the player's goals land on whichever side their team plays.
+  const score = played ? `${fixture.home_goals} - ${fixture.away_goals}` : 'vs';
 
   if (compact) {
+    // The event name (home vs away) is already shown as the session title, so the
+    // row only needs the result: badge + score, no repeated team names.
     return (
       <div className="flex items-center gap-2 text-sm">
         <ResultBadge result={fixture.result} />
-        <span className="font-mono text-slate-100">
-          {played ? `${fixture.our_goals} - ${fixture.their_goals}` : 'vs'}
-        </span>
-        <span className="text-slate-400 truncate">{fixture.opponent}</span>
+        <span className="font-mono text-slate-100">{score}</span>
       </div>
     );
   }
 
+  const homeClass = fixture.is_home ? 'font-semibold text-slate-100' : 'text-slate-300';
+  const awayClass = fixture.is_home ? 'text-slate-300' : 'font-semibold text-slate-100';
   return (
     <div className="rounded-xl bg-brand-panel border border-slate-800 p-4">
       <div className="flex items-center gap-3">
         <ResultBadge result={fixture.result} />
         <div className="flex items-center gap-3 text-lg">
-          <span className="font-semibold text-slate-100">{ourTeam}</span>
-          <span className="font-mono text-slate-100">
-            {played ? `${fixture.our_goals} - ${fixture.their_goals}` : 'vs'}
-          </span>
-          <span className="text-slate-300">{fixture.opponent}</span>
+          <span className={homeClass}>{fixture.home}</span>
+          <span className="font-mono text-slate-100">{score}</span>
+          <span className={awayClass}>{fixture.away}</span>
         </div>
       </div>
       <div className="mt-2 text-xs text-slate-400">
