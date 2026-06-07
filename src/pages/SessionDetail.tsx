@@ -5,12 +5,15 @@ import { PaceZones } from '../components/PaceZones.js';
 import { SessionMap } from '../components/SessionMap.js';
 import { StatTile } from '../components/StatTile.js';
 import {
+  firstActiveWindow,
   formatDateTime,
   formatKickoff,
+  matchWindow,
   MATCH_TYPE_LABEL,
   mToKm,
   msToKmh,
   pct,
+  playedMinutesFromBins,
   positionLabel,
   secToClock,
 } from '../lib/units.js';
@@ -24,6 +27,11 @@ export function SessionDetail() {
   if (q.error) return <div className="text-red-400">{(q.error as Error).message}</div>;
   if (!q.data) return null;
   const s = q.data;
+  // For matches, bound the pace metric to a 85-min match window: the fixture
+  // kickoff when linked, otherwise (a match with no fixture) the first active bin.
+  const win =
+    matchWindow(s.fixture?.date, s.fixture?.time) ??
+    (s.match_type === '11' ? firstActiveWindow(s.distance_5min ?? []) : null);
 
   return (
     <div className="space-y-6">
@@ -48,6 +56,13 @@ export function SessionDetail() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatTile label="Distance" value={mToKm(s.distance)} />
         <StatTile label="Playing time" value={secToClock(s.playing_time)} />
+        {s.distance_5min && s.distance_5min.length > 0 && (
+          <StatTile
+            label="Time on pitch (est.)"
+            value={secToClock(playedMinutesFromBins(s.distance_5min, win?.start, win?.end) * 60)}
+            sublabel="from active pace bins"
+          />
+        )}
         <StatTile label="Top sprint" value={msToKmh(s.sprint_speed)} />
         <StatTile label="Top shot" value={msToKmh(s.shot_speed)} />
         <StatTile
@@ -78,7 +93,9 @@ export function SessionDetail() {
         />
       </div>
 
-      {s.distance_5min && s.distance_5min.length > 0 && <PaceZones bins={s.distance_5min} />}
+      {s.distance_5min && s.distance_5min.length > 0 && (
+        <PaceZones bins={s.distance_5min} windowStart={win?.start} windowEnd={win?.end} />
+      )}
 
       {s.location?.coordinates && <SessionMap location={s.location} />}
     </div>

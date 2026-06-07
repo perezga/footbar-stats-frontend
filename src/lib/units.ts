@@ -1,4 +1,103 @@
-import type { MatchType, Position, RfafForm } from '../api/types.js';
+import type { DistanceBin, MatchType, Position, RfafForm } from '../api/types.js';
+
+/** A 5-min pace bin is "active" if it has any running or sprinting distance. */
+export function binIsActive(b: DistanceBin): boolean {
+  return b.normal > 0 || b.high > 0;
+}
+
+const BIN_MS = 5 * 60 * 1000;
+
+/** A match lasts two 35-min halves plus a 15-min rest between them. */
+export const MATCH_DURATION_MIN = 35 + 15 + 35;
+const MATCH_DURATION_MS = MATCH_DURATION_MIN * 60 * 1000;
+
+/** Europe/Madrid UTC offset (ms) at the given absolute instant. */
+function madridOffsetMs(instant: number): number {
+  const dtf = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Madrid',
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  const p = Object.fromEntries(dtf.formatToParts(new Date(instant)).map((x) => [x.type, x.value]));
+  const asUTC = Date.UTC(+p.year!, +p.month! - 1, +p.day!, +p.hour!, +p.minute!, +p.second!);
+  return asUTC - instant;
+}
+
+/** Absolute instant (ms) for a Madrid-local date 'YYYY-MM-DD' + time 'HH:MM'. */
+export function madridInstantMs(date: string, time: string): number {
+  const guess = Date.parse(`${date}T${time}:00Z`); // interpret naive as UTC first
+  if (Number.isNaN(guess)) return NaN;
+  return guess - madridOffsetMs(guess);
+}
+
+/**
+ * Match window `[kickoff, kickoff + 85min]` derived from a fixture's date/time,
+ * or `null` when there is no fixture / no kickoff time.
+ */
+export function matchWindow(
+  date: string | null | undefined,
+  time: string | null | undefined,
+): { start: number; end: number } | null {
+  if (!date || !time) return null;
+  const start = madridInstantMs(date, time);
+  if (Number.isNaN(start)) return null;
+  return { start, end: start + MATCH_DURATION_MS };
+}
+
+/**
+ * Match window anchored at the first active (running/sprinting) bin, lasting
+ * `MATCH_DURATION_MIN`. Used for matches with no fixture kickoff. `null` if no
+ * bin is active.
+ */
+export function firstActiveWindow(bins: DistanceBin[]): { start: number; end: number } | null {
+  const first = bins.find(binIsActive);
+  if (!first) return null;
+  const start = new Date(first.index).getTime();
+  if (Number.isNaN(start)) return null;
+  return { start, end: start + MATCH_DURATION_MS };
+}
+
+/**
+ * Whether a bin's 5-min window overlaps `[startMs, endMs)`. Returns `true` when no
+ * window is given (so callers treat every bin as in-range).
+ */
+export function binOverlapsWindow(b: DistanceBin, startMs?: number, endMs?: number): boolean {
+  if (startMs == null || endMs == null || Number.isNaN(startMs) || Number.isNaN(endMs)) return true;
+  const t = new Date(b.index).getTime();
+  if (Number.isNaN(t)) return false;
+  return t < endMs && t + BIN_MS > startMs;
+}
+
+/** Bins whose 5-min window overlaps `[startMs, endMs)`. Unfiltered if no window. */
+export function binsInWindow(bins: DistanceBin[], startMs?: number, endMs?: number): DistanceBin[] {
+  if (startMs == null || endMs == null || Number.isNaN(startMs) || Number.isNaN(endMs)) return bins;
+  return bins.filter((b) => binOverlapsWindow(b, startMs, endMs));
+}
+
+/**
+ * Estimate minutes on the pitch from the pace bins: a 5-min bin counts as played
+ * if it is active, or its immediately preceding/following bin is active (so a lone
+ * walk/idle bin between active periods still counts). Walk-only/idle bins with no
+ * active neighbour are excluded. For matches, pass the fixture-derived window
+ * (`matchWindow`) so only bins during the match are considered.
+ */
+export function playedMinutesFromBins(bins: DistanceBin[], startMs?: number, endMs?: number): number {
+  const ranged = binsInWindow(bins, startMs, endMs);
+  let played = 0;
+  for (let i = 0; i < ranged.length; i++) {
+    const active =
+      binIsActive(ranged[i]!) ||
+      (i > 0 && binIsActive(ranged[i - 1]!)) ||
+      (i < ranged.length - 1 && binIsActive(ranged[i + 1]!));
+    if (active) played++;
+  }
+  return played * 5;
+}
 
 /** Tailwind background classes for a W/D/L result badge. */
 export const RESULT_STYLE: Record<RfafForm, string> = {
