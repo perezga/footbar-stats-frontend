@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { useSession } from '../api/hooks.js';
+import { useRefreshSession, useSession } from '../api/hooks.js';
 import { MatchResult } from '../components/MatchResult.js';
 import { PaceZones } from '../components/PaceZones.js';
 import { SessionMap } from '../components/SessionMap.js';
@@ -22,6 +22,7 @@ export function SessionDetail() {
   const { id } = useParams<{ id: string }>();
   const sessionId = Number(id);
   const q = useSession(sessionId, Number.isFinite(sessionId));
+  const refresh = useRefreshSession(sessionId);
 
   if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
   if (q.error) return <div className="text-red-400">{(q.error as Error).message}</div>;
@@ -36,9 +37,23 @@ export function SessionDetail() {
   return (
     <div className="space-y-6">
       <div>
-        <Link to="/sessions" className="text-sm text-slate-400 hover:text-slate-200">
-          ← All sessions
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link to="/sessions" className="text-sm text-slate-400 hover:text-slate-200">
+            ← All sessions
+          </Link>
+          <button
+            type="button"
+            onClick={() => refresh.mutate()}
+            disabled={refresh.isPending}
+            className="px-3 py-1 rounded-md border border-slate-700 text-sm hover:border-slate-500 disabled:opacity-50"
+            title="Delete the cached data for this session and re-fetch it from Footbar"
+          >
+            {refresh.isPending ? 'Refreshing…' : '↻ Refresh'}
+          </button>
+        </div>
+        {refresh.error && (
+          <div className="text-red-400 text-sm mt-2">{(refresh.error as Error).message}</div>
+        )}
         <h1 className="text-2xl font-semibold text-slate-100 mt-2">{s.title || 'Untitled'}</h1>
         <div className="text-slate-400 text-sm mt-1">
           {s.fixture

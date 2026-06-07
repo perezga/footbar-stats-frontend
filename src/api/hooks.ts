@@ -72,6 +72,19 @@ export function useSession(id: number, enabled: boolean) {
   });
 }
 
+export function useRefreshSession(id: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<SessionDetail>(`/api/sessions/${id}/refresh`, { method: 'POST' }),
+    onSuccess: (data) => {
+      qc.setQueryData(['session', id], data);
+      qc.invalidateQueries({ queryKey: ['sessions'] });
+      qc.invalidateQueries({ queryKey: ['records'] });
+      qc.invalidateQueries({ queryKey: ['trends'] });
+    },
+  });
+}
+
 export function useRecords(matchType: MatchType | undefined, enabled: boolean) {
   const qs = matchType ? `?match_type=${matchType}` : '';
   return useQuery({
