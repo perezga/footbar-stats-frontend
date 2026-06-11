@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
   CartesianGrid,
   Legend,
@@ -26,7 +27,9 @@ function label(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-export function TrendChart({ series, unit }: Props) {
+// Memoized: recharts re-renders are the expensive part of the Stats grid, and
+// the series/unit props only change when a query refetches.
+export const TrendChart = memo(function TrendChart({ series, unit }: Props) {
   // Merge all series onto a shared, chronologically-sorted date axis. Each row
   // holds whichever series have a session on that date; gaps are bridged with
   // connectNulls so the two lines stay readable.
@@ -67,4 +70,4 @@ export function TrendChart({ series, unit }: Props) {
       </LineChart>
     </ResponsiveContainer>
   );
-}
+});

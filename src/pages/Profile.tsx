@@ -1,5 +1,6 @@
 import { usePlayerStats, useProfile, useRecords, useScorers, useSessions } from '../api/hooks.js';
 import type { PlayerStats } from '../api/types.js';
+import { ErrorAlert } from '../components/ErrorAlert.js';
 import { MatchHero } from '../components/MatchHero.js';
 import { PlayerCard } from '../components/PlayerCard.js';
 import { StatTile } from '../components/StatTile.js';
@@ -58,7 +59,7 @@ export function Profile() {
   const scorers = useScorers(true, '');
   const matches = useSessions({ matchType: '11', includeFixtures: true, limit: 200 }, true);
   if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
-  if (q.error) return <div className="text-red-400">{(q.error as Error).message}</div>;
+  if (q.error) return <ErrorAlert error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return null;
   const p = q.data;
   const name = `${p.first_name} ${p.last_name}`.trim() || p.nickname;

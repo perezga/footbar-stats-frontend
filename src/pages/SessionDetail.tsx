@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useAverages, useRefreshSession, useSession } from '../api/hooks.js';
+import { ErrorAlert } from '../components/ErrorAlert.js';
 import { MatchResult } from '../components/MatchResult.js';
 import { PaceZones } from '../components/PaceZones.js';
 import { SessionMap } from '../components/SessionMap.js';
@@ -26,7 +27,7 @@ export function SessionDetail() {
   const avg = useAverages(q.data?.match_type ?? '11', sessionId, !!q.data);
 
   if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
-  if (q.error) return <div className="text-red-400">{(q.error as Error).message}</div>;
+  if (q.error) return <ErrorAlert error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return null;
   const s = q.data;
   // Percent vs the recent-sessions mean; undefined (no delta shown) when the
@@ -63,7 +64,9 @@ export function SessionDetail() {
           </button>
         </div>
         {refresh.error && (
-          <div className="text-red-400 text-sm mt-2">{(refresh.error as Error).message}</div>
+          <div className="mt-2">
+            <ErrorAlert error={refresh.error} onRetry={() => refresh.mutate()} />
+          </div>
         )}
         <h1 className="text-2xl font-semibold text-slate-100 mt-2">{s.title || 'Untitled'}</h1>
         <div className="text-slate-400 text-sm mt-1">

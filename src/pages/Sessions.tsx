@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRefreshSessions, useSessions } from '../api/hooks.js';
 import type { MatchType } from '../api/types.js';
+import { ErrorAlert } from '../components/ErrorAlert.js';
 import {
   FixtureLegLine,
   MatchResult,
@@ -49,7 +50,7 @@ export function Sessions() {
       </div>
 
       {q.isLoading && <div className="text-slate-400">Loading…</div>}
-      {q.error && <div className="text-red-400">{(q.error as Error).message}</div>}
+      {q.error && <ErrorAlert error={q.error} onRetry={() => q.refetch()} />}
 
       <div className="rounded-xl bg-brand-panel border border-slate-800 divide-y divide-slate-800">
         {q.data?.results.map((s) => {

@@ -1,3 +1,5 @@
+// Manually mirrors the backend's src/footbar/types.ts and src/rfaf/types.ts
+// (plus its route response shapes) — update both sides together.
 export type FavFoot = 'r' | 'l' | 'b' | 'n';
 export type Gender = 'm' | 'f';
 export type MatchType = '11' | 'ss' | 'tr' | 'ru';

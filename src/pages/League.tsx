@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { ErrorAlert } from '../components/ErrorAlert.js';
 import {
   CartesianGrid,
   Line,
@@ -283,7 +284,7 @@ export function League() {
       </div>
 
       {active.isLoading && <div className="text-slate-400">Loading…</div>}
-      {active.error && <div className="text-red-400">{(active.error as Error).message}</div>}
+      {active.error && <ErrorAlert error={active.error} onRetry={() => active.refetch()} />}
       {active.data && active.data.results.length === 0 && (
         <div className="text-slate-400">No data for this season.</div>
       )}
