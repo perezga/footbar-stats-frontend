@@ -99,6 +99,26 @@ export function playedMinutesFromBins(bins: DistanceBin[], startMs?: number, end
   return played * 5;
 }
 
+const madridDate = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Madrid',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/** Calendar days from today (Madrid) to a fixture date 'YYYY-MM-DD'. */
+export function daysUntil(date: string): number {
+  const today = madridDate.format(new Date()); // en-CA yields YYYY-MM-DD
+  return Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
+}
+
+/** Countdown chip text for an upcoming fixture (Spanish, fixture UI). */
+export function countdownLabel(days: number): string {
+  if (days <= 0) return 'hoy';
+  if (days === 1) return 'mañana';
+  return `en ${days} días`;
+}
+
 /** Tailwind background classes for a W/D/L result badge. */
 export const RESULT_STYLE: Record<RfafForm, string> = {
   W: 'bg-green-600',

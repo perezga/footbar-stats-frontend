@@ -13,6 +13,8 @@ const METRICS: { key: string; label: string; unit?: string; transform?: (v: numb
   { key: 'activity', label: 'Activity %', unit: '%', transform: (v) => (v <= 1 ? v * 100 : v) },
   { key: 'playing_time', label: 'Playing time (min)', unit: 'min', transform: (v) => v / 60 },
   { key: 'hsr_plus', label: 'High-speed running (km)', unit: 'km', transform: (v) => v / 1000 },
+  { key: 'time_running', label: 'Time running (min)', unit: 'min', transform: (v) => v / 60 },
+  { key: 'dribble_count', label: 'Dribbles' },
 ];
 
 const MATCH_COLOR = '#F7335D'; // partidos (brand)

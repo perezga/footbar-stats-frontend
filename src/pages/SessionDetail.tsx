@@ -1,5 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
-import { useRefreshSession, useSession } from '../api/hooks.js';
+import { useAverages, useRefreshSession, useSession } from '../api/hooks.js';
 import { MatchResult } from '../components/MatchResult.js';
 import { PaceZones } from '../components/PaceZones.js';
 import { SessionMap } from '../components/SessionMap.js';
@@ -23,11 +23,22 @@ export function SessionDetail() {
   const sessionId = Number(id);
   const q = useSession(sessionId, Number.isFinite(sessionId));
   const refresh = useRefreshSession(sessionId);
+  const avg = useAverages(q.data?.match_type ?? '11', sessionId, !!q.data);
 
   if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
   if (q.error) return <div className="text-red-400">{(q.error as Error).message}</div>;
   if (!q.data) return null;
   const s = q.data;
+  // Percent vs the recent-sessions mean; undefined (no delta shown) when the
+  // metric is missing on either side or the mean is ~0.
+  const delta = (key: string, v: number | null | undefined): number | undefined => {
+    const a = avg.data?.averages[key];
+    if (!a || typeof v !== 'number' || Math.abs(a.mean) < 1e-9) return undefined;
+    return ((v - a.mean) / Math.abs(a.mean)) * 100;
+  };
+  const deltaTitle = avg.data
+    ? `vs media de los últimos ${avg.data.count} ${MATCH_TYPE_LABEL[s.match_type]}`
+    : undefined;
   // For matches, bound the pace metric to a 85-min match window: the fixture
   // kickoff when linked, otherwise (a match with no fixture) the first active bin.
   const win =
@@ -69,8 +80,18 @@ export function SessionDetail() {
       {s.fixture && <MatchResult fixture={s.fixture} />}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatTile label="Distance" value={mToKm(s.distance)} />
-        <StatTile label="Playing time" value={secToClock(s.playing_time)} />
+        <StatTile
+          label="Distance"
+          value={mToKm(s.distance)}
+          delta={delta('distance', s.distance)}
+          deltaTitle={deltaTitle}
+        />
+        <StatTile
+          label="Playing time"
+          value={secToClock(s.playing_time)}
+          delta={delta('playing_time', s.playing_time)}
+          deltaTitle={deltaTitle}
+        />
         {s.distance_5min && s.distance_5min.length > 0 && (
           <StatTile
             label="Time on pitch (est.)"
@@ -78,33 +99,90 @@ export function SessionDetail() {
             sublabel="from active pace bins"
           />
         )}
-        <StatTile label="Top sprint" value={msToKmh(s.sprint_speed)} />
-        <StatTile label="Top shot" value={msToKmh(s.shot_speed)} />
+        <StatTile
+          label="Top sprint"
+          value={msToKmh(s.sprint_speed)}
+          delta={delta('sprint_speed', s.sprint_speed)}
+          deltaTitle={deltaTitle}
+        />
+        <StatTile
+          label="Top shot"
+          value={msToKmh(s.shot_speed)}
+          delta={delta('shot_speed', s.shot_speed)}
+          deltaTitle={deltaTitle}
+        />
         <StatTile
           label="Sprints"
           value={String(s.sprint_count)}
           sublabel={`avg ${msToKmh(s.avg_sprint_speed)}`}
+          delta={delta('sprint_count', s.sprint_count)}
+          deltaTitle={deltaTitle}
         />
         <StatTile
           label="Shots"
           value={String(s.shot_count)}
           sublabel={`avg ${msToKmh(s.avg_shot_speed)}`}
+          delta={delta('shot_count', s.shot_count)}
+          deltaTitle={deltaTitle}
         />
-        <StatTile label="Passes" value={String(s.pass_count)} />
-        <StatTile label="Activity" value={pct(s.activity)} />
+        <StatTile
+          label="Passes"
+          value={String(s.pass_count)}
+          delta={delta('pass_count', s.pass_count)}
+          deltaTitle={deltaTitle}
+        />
+        <StatTile
+          label="Activity"
+          value={pct(s.activity)}
+          delta={delta('activity', s.activity)}
+          deltaTitle={deltaTitle}
+        />
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatTile label="High-speed running" value={mToKm(s.hsr_plus)} />
-        <StatTile label="Time with ball" value={secToClock(s.time_with_ball)} />
+        <StatTile
+          label="High-speed running"
+          value={mToKm(s.hsr_plus)}
+          delta={delta('hsr_plus', s.hsr_plus)}
+          deltaTitle={deltaTitle}
+        />
+        <StatTile
+          label="Time with ball"
+          value={secToClock(s.time_with_ball)}
+          delta={delta('time_with_ball', s.time_with_ball)}
+          deltaTitle={deltaTitle}
+        />
+        <StatTile
+          label="Dribbles"
+          value={s.dribble_count != null ? String(s.dribble_count) : '—'}
+          delta={delta('dribble_count', s.dribble_count)}
+          deltaTitle={deltaTitle}
+        />
+        <StatTile
+          label="Runs"
+          value={s.run_count !== null ? String(s.run_count) : '—'}
+          delta={delta('run_count', s.run_count)}
+          deltaTitle={deltaTitle}
+        />
+        <StatTile
+          label="Time running"
+          value={secToClock(s.time_running)}
+          delta={delta('time_running', s.time_running)}
+          deltaTitle={deltaTitle}
+        />
         <StatTile
           label="Acceleration"
           value={s.acceleration ? `${s.acceleration.toFixed(2)} s to 18 km/h` : '—'}
+          delta={delta('acceleration', s.acceleration)}
+          deltaInvert
+          deltaTitle={deltaTitle}
         />
         <StatTile
           label="Stop & go"
           value={s.stop_and_go !== null ? s.stop_and_go.toFixed(1) : '—'}
           sublabel="rhythm changes / 5 min"
+          delta={delta('stop_and_go', s.stop_and_go)}
+          deltaTitle={deltaTitle}
         />
       </div>
 

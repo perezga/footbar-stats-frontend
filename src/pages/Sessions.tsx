@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRefreshSessions, useSessions } from '../api/hooks.js';
 import type { MatchType } from '../api/types.js';
-import { MatchResult } from '../components/MatchResult.js';
+import {
+  FixtureLegLine,
+  MatchResult,
+  PlayerEventsInline,
+  type FixtureLeg,
+} from '../components/MatchResult.js';
 import { MatchTypeFilter } from '../components/MatchTypeFilter.js';
 import { formatDateTime, formatKickoff, MATCH_TYPE_LABEL, positionLabel } from '../lib/units.js';
 
@@ -11,7 +16,10 @@ const PAGE_SIZE = 25;
 export function Sessions() {
   const [matchType, setMatchType] = useState<MatchType | undefined>(undefined);
   const [page, setPage] = useState(0);
-  const q = useSessions({ matchType, limit: PAGE_SIZE, offset: page * PAGE_SIZE }, true);
+  const q = useSessions(
+    { matchType, limit: PAGE_SIZE, offset: page * PAGE_SIZE, includeFixtures: true },
+    true,
+  );
   const refresh = useRefreshSessions();
 
   const total = q.data?.count ?? 0;
@@ -44,31 +52,81 @@ export function Sessions() {
       {q.error && <div className="text-red-400">{(q.error as Error).message}</div>}
 
       <div className="rounded-xl bg-brand-panel border border-slate-800 divide-y divide-slate-800">
-        {q.data?.results.map((s) => (
-          <Link
-            key={s.id}
-            to={`/sessions/${s.id}`}
-            className="block px-4 py-3 hover:bg-slate-800/40"
-          >
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="text-slate-100 font-medium">{s.title || 'Untitled'}</div>
-                <div className="text-xs text-slate-400 mt-0.5">
-                  {s.fixture
-                    ? formatKickoff(s.fixture.date, s.fixture.time)
-                    : formatDateTime(s.start_date)}{' '}
-                  · {MATCH_TYPE_LABEL[s.match_type]} · {positionLabel(s.position)}
+        {q.data?.results.map((s) => {
+          if (s.other_leg && s.fixture) {
+            // Merged league pair: opponent header plus one sub-line per leg,
+            // positioned in the date-descending feed by the row's own date.
+            const thisLeg: FixtureLeg = {
+              label: s.leg === 2 ? 'Vuelta' : 'Ida',
+              sessionId: s.id,
+              fixture: s.fixture,
+              position: s.position,
+              scoreStars: s.score_stars,
+            };
+            const otherLeg: FixtureLeg = {
+              label: s.leg === 2 ? 'Ida' : 'Vuelta',
+              sessionId: s.other_leg.session_id,
+              fixture: s.other_leg.fixture,
+              position: s.other_leg.position,
+              scoreStars: s.other_leg.score_stars,
+            };
+            const [ida, vuelta] =
+              thisLeg.label === 'Ida' ? [thisLeg, otherLeg] : [otherLeg, thisLeg];
+            return (
+              <div key={s.id ?? `fixture-${s.start_date}`} className="px-4 py-3">
+                <div className="truncate text-slate-100 font-medium">{s.fixture.opponent}</div>
+                <FixtureLegLine leg={ida} />
+                <FixtureLegLine leg={vuelta} />
+              </div>
+            );
+          }
+          const content = (
+            <>
+              <div className="flex items-center justify-between gap-4">
+                <div className="truncate text-slate-100 font-medium">
+                  {s.fixture ? s.fixture.opponent : s.title || 'Untitled'}
+                </div>
+                <div className="flex items-center gap-2">
+                  {s.fixture && <MatchResult fixture={s.fixture} compact />}
+                  <span
+                    title={
+                      s.id !== null
+                        ? 'Estadísticas Footbar disponibles'
+                        : 'Sin estadísticas Footbar'
+                    }
+                    className={s.id !== null ? 'text-sm' : 'text-sm opacity-25 grayscale'}
+                  >
+                    📊
+                  </span>
                 </div>
               </div>
-              <div className="flex items-center gap-4">
-                {s.fixture && <MatchResult fixture={s.fixture} compact />}
+              <div className="mt-0.5 overflow-hidden whitespace-nowrap text-ellipsis text-xs text-slate-400">
+                {s.fixture
+                  ? formatKickoff(s.fixture.date, s.fixture.time)
+                  : formatDateTime(s.start_date)}{' '}
+                · {MATCH_TYPE_LABEL[s.match_type]} · {positionLabel(s.position)}
+                {s.fixture && s.fixture.events.length > 0 && (
+                  <>
+                    {' · '}
+                    <PlayerEventsInline events={s.fixture.events} />
+                  </>
+                )}
                 {typeof s.score_stars === 'number' && (
-                  <div className="text-sm text-brand">★ {s.score_stars.toFixed(1)}</div>
+                  <span className="text-brand"> · ★ {s.score_stars.toFixed(1)}</span>
                 )}
               </div>
+            </>
+          );
+          return s.id !== null ? (
+            <Link key={s.id} to={`/sessions/${s.id}`} className="block px-4 py-3 hover:bg-slate-800/40">
+              {content}
+            </Link>
+          ) : (
+            <div key={`fixture-${s.start_date}`} className="block px-4 py-3">
+              {content}
             </div>
-          </Link>
-        ))}
+          );
+        })}
         {q.data?.results.length === 0 && (
           <div className="px-4 py-6 text-slate-400 text-sm">No sessions match these filters.</div>
         )}

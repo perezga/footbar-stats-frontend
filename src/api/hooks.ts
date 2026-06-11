@@ -1,12 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client.js';
 import type {
+  AveragesResponse,
   Fixture,
   MatchType,
+  PlayerStatsResponse,
   Profile,
   RecordEntry,
   RfafResponse,
   Scorer,
+  SeasonsResponse,
   SessionDetail,
   SessionListResponse,
   Standing,
@@ -37,6 +40,8 @@ export interface SessionFilters {
   matchType?: MatchType | undefined;
   limit?: number;
   offset?: number;
+  /** Merge in RFAF fixtures the tracker didn't record (id null rows). */
+  includeFixtures?: boolean;
 }
 
 export function useSessions(filters: SessionFilters, enabled: boolean) {
@@ -44,6 +49,7 @@ export function useSessions(filters: SessionFilters, enabled: boolean) {
   if (filters.matchType) params.set('match_type', filters.matchType);
   if (filters.limit) params.set('limit', String(filters.limit));
   if (filters.offset) params.set('offset', String(filters.offset));
+  if (filters.includeFixtures) params.set('include_fixtures', '1');
   const qs = params.toString();
   return useQuery({
     queryKey: ['sessions', filters],
@@ -105,26 +111,54 @@ export function useTrend(metric: string, matchType: MatchType | undefined, enabl
   });
 }
 
-export function useStandings(enabled: boolean) {
+/** Recent-sessions averages to compare a session against (excludes itself). */
+export function useAverages(matchType: MatchType, excludeId: number, enabled: boolean) {
+  const params = new URLSearchParams({ match_type: matchType, exclude: String(excludeId) });
   return useQuery({
-    queryKey: ['rfaf', 'standings'],
-    queryFn: () => api<RfafResponse<Standing>>('/api/rfaf/standings'),
+    queryKey: ['averages', matchType, excludeId],
+    queryFn: () => api<AveragesResponse>(`/api/stats/averages?${params.toString()}`),
     enabled,
   });
 }
 
-export function useScorers(enabled: boolean) {
+/** '' selects the backend's default (current) season. */
+const seasonQs = (season: string) => (season ? `?season=${season}` : '');
+
+export function useSeasons() {
   return useQuery({
-    queryKey: ['rfaf', 'scorers'],
-    queryFn: () => api<RfafResponse<Scorer>>('/api/rfaf/scorers'),
+    queryKey: ['rfaf', 'seasons'],
+    queryFn: () => api<SeasonsResponse>('/api/rfaf/seasons'),
+  });
+}
+
+export function useStandings(enabled: boolean, season: string) {
+  return useQuery({
+    queryKey: ['rfaf', 'standings', season],
+    queryFn: () => api<RfafResponse<Standing>>(`/api/rfaf/standings${seasonQs(season)}`),
     enabled,
   });
 }
 
-export function useFixtures(enabled: boolean) {
+export function useScorers(enabled: boolean, season: string) {
   return useQuery({
-    queryKey: ['rfaf', 'fixtures'],
-    queryFn: () => api<RfafResponse<Fixture>>('/api/rfaf/fixtures'),
+    queryKey: ['rfaf', 'scorers', season],
+    queryFn: () => api<RfafResponse<Scorer>>(`/api/rfaf/scorers${seasonQs(season)}`),
+    enabled,
+  });
+}
+
+export function useFixtures(enabled: boolean, season: string) {
+  return useQuery({
+    queryKey: ['rfaf', 'fixtures', season],
+    queryFn: () => api<RfafResponse<Fixture>>(`/api/rfaf/fixtures${seasonQs(season)}`),
+    enabled,
+  });
+}
+
+export function usePlayerStats(enabled: boolean, season = '') {
+  return useQuery({
+    queryKey: ['rfaf', 'player-stats', season],
+    queryFn: () => api<PlayerStatsResponse>(`/api/rfaf/player-stats${seasonQs(season)}`),
     enabled,
   });
 }
@@ -132,7 +166,8 @@ export function useFixtures(enabled: boolean) {
 export function useRefreshRfaf() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => api<{ ok: true }>('/api/rfaf/refresh', { method: 'POST' }),
+    mutationFn: (season: string) =>
+      api<{ ok: true }>(`/api/rfaf/refresh${seasonQs(season)}`, { method: 'POST' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['rfaf'] }),
   });
 }

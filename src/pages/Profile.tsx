@@ -1,4 +1,7 @@
-import { useProfile } from '../api/hooks.js';
+import { usePlayerStats, useProfile, useRecords, useScorers, useSessions } from '../api/hooks.js';
+import type { PlayerStats } from '../api/types.js';
+import { MatchHero } from '../components/MatchHero.js';
+import { PlayerCard } from '../components/PlayerCard.js';
 import { StatTile } from '../components/StatTile.js';
 
 const FOOT_LABEL: Record<string, string> = { r: 'Right', l: 'Left', b: 'Both', n: 'None' };
@@ -11,8 +14,49 @@ const STRENGTH_LABEL: Record<string, string> = {
   un: 'Undefined',
 };
 
+/** Cumulative season stats from Universo RFAF for the current season. */
+function SeasonStats({ stats }: { stats: PlayerStats }) {
+  const tiles: { label: string; value: string }[] = [
+    ...stats.stats.map((s) => ({ label: s.name, value: String(s.value) })),
+    ...stats.cards.map((c) => ({ label: c.name, value: String(c.value) })),
+  ];
+  // minutes_played is null when the competition doesn't publish minutes; the
+  // per-game average comes back as 0 in that case, so gate both on it.
+  if (stats.minutes_played !== null) {
+    tiles.push({ label: 'Minutos jugados', value: String(stats.minutes_played) });
+    if (stats.minutes_per_game !== null) {
+      tiles.push({ label: 'Minutos por partido', value: String(stats.minutes_per_game) });
+    }
+  }
+  if (tiles.length === 0) return null;
+
+  return (
+    <section className="space-y-3">
+      <div>
+        <h2 className="text-lg font-semibold text-slate-100">
+          Estadísticas acumuladas {stats.season}
+        </h2>
+        <div className="text-sm text-slate-400">
+          {[stats.team, stats.category, stats.dorsal !== null ? `Dorsal ${stats.dorsal}` : null]
+            .filter(Boolean)
+            .join(' · ')}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {tiles.map((t) => (
+          <StatTile key={t.label} label={t.label} value={t.value} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function Profile() {
   const q = useProfile(true);
+  const rfaf = usePlayerStats(true);
+  const records = useRecords('11', true);
+  const scorers = useScorers(true, '');
+  const matches = useSessions({ matchType: '11', includeFixtures: true, limit: 200 }, true);
   if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
   if (q.error) return <div className="text-red-400">{(q.error as Error).message}</div>;
   if (!q.data) return null;
@@ -38,6 +82,16 @@ export function Profile() {
         )}
       </div>
 
+      {matches.data && <MatchHero matches={matches.data.results} />}
+
+      <PlayerCard
+        profile={p}
+        stats={rfaf.data?.results}
+        scorer={scorers.data?.results.find((s) => s.own)}
+        records={records.data?.records ?? []}
+        matches={matches.data?.results ?? []}
+      />
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatTile label="Age category" value={p.age_category} />
         <StatTile label="Favourite position" value={p.fav_position || '—'} />
@@ -48,6 +102,14 @@ export function Profile() {
         <StatTile label="Height" value={p.height ? `${(p.height * 100).toFixed(0)} cm` : '—'} />
         <StatTile label="Weight" value={p.weight ? `${p.weight.toFixed(0)} kg` : '—'} />
       </div>
+
+      {rfaf.isLoading && <div className="text-slate-400">Loading season stats…</div>}
+      {rfaf.error && (
+        <div className="text-sm text-slate-500">
+          Season stats unavailable: {(rfaf.error as Error).message}
+        </div>
+      )}
+      {rfaf.data && <SeasonStats stats={rfaf.data.results} />}
     </div>
   );
 }

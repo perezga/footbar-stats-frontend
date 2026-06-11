@@ -28,6 +28,14 @@ export interface Profile {
   country_flag: string;
 }
 
+/** One of the tracked player's in-match events (goals, cards). */
+export interface PlayerMatchEvent {
+  kind: 'goal' | 'yellow' | 'red' | 'second_yellow' | 'other';
+  /** Raw Universo RFAF event type (e.g. 'gol_100'). */
+  type: string;
+  minute: number | null;
+}
+
 /** RFAF fixture linked to a session by date (fixture is the source of truth). */
 export interface SessionFixture {
   matchday: number;
@@ -42,6 +50,20 @@ export interface SessionFixture {
   our_goals: number | null;
   their_goals: number | null;
   result: RfafForm | null;
+  /** The tracked player's events in this match (goals, cards). */
+  events: PlayerMatchEvent[];
+  /** Titular (true) / suplente (false); undefined when there's no player-match row. */
+  started?: boolean;
+  captain?: boolean;
+}
+
+/** The opposite league leg vs the same opponent, merged into this row. */
+export interface OtherLeg {
+  /** Footbar session id of that leg, or null if it wasn't recorded. */
+  session_id: number | null;
+  fixture: SessionFixture;
+  position?: Position;
+  score_stars?: number;
 }
 
 export interface SessionListItem {
@@ -54,6 +76,9 @@ export interface SessionListItem {
   position?: Position;
   score_stars?: number;
   fixture?: SessionFixture;
+  /** Which league leg this row is (1 = ida, 2 = vuelta) when legs are merged. */
+  leg?: 1 | 2;
+  other_leg?: OtherLeg;
 }
 
 export interface DistanceBin {
@@ -81,11 +106,46 @@ export interface SessionDetail extends SessionListItem {
   stop_and_go: number | null;
   acceleration: number | null;
   distance_5min: DistanceBin[] | null;
+  /** May be missing on older cached details. */
+  dribble_count?: number;
 }
+
+/** Mean of one metric over the recent-sessions window (n = sessions with data). */
+export interface MetricAverage {
+  mean: number;
+  n: number;
+}
+
+export interface AveragesResponse {
+  match_type: MatchType | null;
+  window: number;
+  /** Sessions in the comparison pool (cached details only). */
+  count: number;
+  averages: Record<string, MetricAverage | undefined>;
+}
+
+/** RFAF fixture with no Footbar session (id null → no stats, not clickable). */
+export interface FixtureOnlyItem {
+  id: null;
+  start_date: string;
+  stop_date: string;
+  title: string;
+  match_type: '11';
+  fixture: SessionFixture;
+  /** Which league leg this row is (1 = ida, 2 = vuelta) when legs are merged. */
+  leg?: 1 | 2;
+  other_leg?: OtherLeg;
+  /** Never present; declared so union access typechecks without narrowing. */
+  position?: undefined;
+  score_stars?: undefined;
+}
+
+/** One row of the merged matches+sessions feed. */
+export type MatchListItem = SessionListItem | FixtureOnlyItem;
 
 export interface SessionListResponse {
   count: number;
-  results: SessionListItem[];
+  results: MatchListItem[];
   last_sync: number;
 }
 
@@ -149,4 +209,45 @@ export interface Fixture {
 export interface RfafResponse<T> {
   results: T[];
   fetched_at: number;
+}
+
+/** One named counter in the player stats ("Convocados", "Total Goles", …). */
+export interface PlayerStatLine {
+  name: string;
+  value: number;
+}
+
+/** The tracked player's cumulative season statistics from Universo RFAF. */
+export interface PlayerStats {
+  player_id: string;
+  player: string;
+  team: string;
+  team_id: number | null;
+  dorsal: number | null;
+  age: number | null;
+  category: string;
+  season_id: string;
+  /** Season label (e.g. '2025-2026'). */
+  season: string;
+  minutes_played: number | null;
+  minutes_per_game: number | null;
+  stats: PlayerStatLine[];
+  cards: PlayerStatLine[];
+  photo_url: string | null;
+}
+
+export interface PlayerStatsResponse {
+  results: PlayerStats;
+  fetched_at: number;
+}
+
+/** One selectable season ('21' = 2025-2026). */
+export interface Season {
+  id: string;
+  name: string;
+}
+
+export interface SeasonsResponse extends RfafResponse<Season> {
+  /** Season id the backend defaults to when none is selected. */
+  current: string;
 }

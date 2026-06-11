@@ -1,8 +1,18 @@
 import { useMemo, useState } from 'react';
 import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
   useFixtures,
   useRefreshRfaf,
   useScorers,
+  useSeasons,
   useStandings,
 } from '../api/hooks.js';
 import type { Fixture, RfafForm, Scorer, Standing } from '../api/types.js';
@@ -118,6 +128,61 @@ function FixturesList({ rows, ownTeam }: { rows: Fixture[]; ownTeam: string | nu
   );
 }
 
+const POINTS: Record<RfafForm, number> = { W: 3, D: 1, L: 0 };
+const DOT_COLOR: Record<RfafForm, string> = { W: '#16a34a', D: '#eab308', L: '#dc2626' };
+
+/**
+ * Cumulative league points after each played matchday (own team only — there
+ * is no historical standings source, so position-by-matchday can't be drawn).
+ */
+function PointsEvolution({ rows }: { rows: Fixture[] }) {
+  const data = useMemo(() => {
+    let pts = 0;
+    return rows
+      .filter((f) => f.result !== null)
+      .sort((a, b) => a.matchday - b.matchday)
+      .map((f) => ({ label: `J${f.matchday}`, points: (pts += POINTS[f.result!]), result: f.result! }));
+  }, [rows]);
+  if (data.length === 0) return null;
+
+  return (
+    <div className="rounded-xl bg-brand-panel border border-slate-800 p-4">
+      <h2 className="text-sm font-semibold text-slate-300">Evolución de puntos por jornada</h2>
+      <div className="mt-3">
+        <ResponsiveContainer width="100%" height={260}>
+          <LineChart data={data}>
+            <CartesianGrid stroke="#1f2937" />
+            <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} />
+            <YAxis stroke="#94a3b8" fontSize={11} allowDecimals={false} />
+            <Tooltip
+              contentStyle={{ background: '#0F1420', border: '1px solid #334155' }}
+              labelStyle={{ color: '#cbd5e1' }}
+            />
+            <Line
+              type="monotone"
+              dataKey="points"
+              name="Puntos"
+              stroke="#F7335D"
+              strokeWidth={2}
+              isAnimationActive={false}
+              dot={(p: { cx?: number; cy?: number; index?: number; payload?: { result: RfafForm } }) => (
+                <circle
+                  key={p.index}
+                  cx={p.cx}
+                  cy={p.cy}
+                  r={4}
+                  fill={p.payload ? DOT_COLOR[p.payload.result] : '#F7335D'}
+                  stroke="none"
+                />
+              )}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
 function ScorersTable({ rows }: { rows: Scorer[] }) {
   return (
     <div className="overflow-x-auto rounded-xl bg-brand-panel border border-slate-800">
@@ -158,9 +223,12 @@ function ScorersTable({ rows }: { rows: Scorer[] }) {
 
 export function League() {
   const [tab, setTab] = useState<Tab>('standings');
-  const standings = useStandings(true);
-  const fixtures = useFixtures(tab === 'fixtures');
-  const scorers = useScorers(tab === 'scorers');
+  // '' = the backend's default (current) season.
+  const [season, setSeason] = useState('');
+  const seasons = useSeasons();
+  const standings = useStandings(true, season);
+  const fixtures = useFixtures(tab === 'fixtures', season);
+  const scorers = useScorers(tab === 'scorers', season);
   const refresh = useRefreshRfaf();
 
   const ownTeam = useMemo(
@@ -189,10 +257,23 @@ export function League() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm text-slate-400">
+          {seasons.data && (
+            <select
+              value={season || seasons.data.current}
+              onChange={(e) => setSeason(e.target.value === seasons.data.current ? '' : e.target.value)}
+              className="rounded-md border border-slate-700 bg-brand-panel px-2 py-1 text-slate-300 hover:border-slate-500"
+            >
+              {seasons.data.results.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          )}
           {lastSync && <span>Synced {lastSync.toLocaleTimeString()}</span>}
           <button
             type="button"
-            onClick={() => refresh.mutate()}
+            onClick={() => refresh.mutate(season)}
             disabled={refresh.isPending}
             className="px-3 py-1 rounded-md border border-slate-700 hover:border-slate-500 disabled:opacity-50"
           >
@@ -203,12 +284,22 @@ export function League() {
 
       {active.isLoading && <div className="text-slate-400">Loading…</div>}
       {active.error && <div className="text-red-400">{(active.error as Error).message}</div>}
-
-      {tab === 'standings' && standings.data && <StandingsTable rows={standings.data.results} />}
-      {tab === 'fixtures' && fixtures.data && (
-        <FixturesList rows={fixtures.data.results} ownTeam={ownTeam} />
+      {active.data && active.data.results.length === 0 && (
+        <div className="text-slate-400">No data for this season.</div>
       )}
-      {tab === 'scorers' && scorers.data && <ScorersTable rows={scorers.data.results} />}
+
+      {tab === 'standings' && standings.data && standings.data.results.length > 0 && (
+        <StandingsTable rows={standings.data.results} />
+      )}
+      {tab === 'fixtures' && fixtures.data && fixtures.data.results.length > 0 && (
+        <>
+          <FixturesList rows={fixtures.data.results} ownTeam={ownTeam} />
+          <PointsEvolution rows={fixtures.data.results} />
+        </>
+      )}
+      {tab === 'scorers' && scorers.data && scorers.data.results.length > 0 && (
+        <ScorersTable rows={scorers.data.results} />
+      )}
     </div>
   );
 }
