@@ -4,10 +4,10 @@ import { useRefreshSessions, useSessions } from '../api/hooks.js';
 import type { MatchType } from '../api/types.js';
 import { ErrorAlert } from '../components/ErrorAlert.js';
 import {
+  type FixtureLeg,
   FixtureLegLine,
   MatchResult,
   PlayerEventsInline,
-  type FixtureLeg,
 } from '../components/MatchResult.js';
 import { MatchTypeFilter } from '../components/MatchTypeFilter.js';
 import { formatDateTime, formatKickoff, MATCH_TYPE_LABEL, positionLabel } from '../lib/units.js';
@@ -119,7 +119,11 @@ export function Sessions() {
             </>
           );
           return s.id !== null ? (
-            <Link key={s.id} to={`/sessions/${s.id}`} className="block px-4 py-3 hover:bg-slate-800/40">
+            <Link
+              key={s.id}
+              to={`/sessions/${s.id}`}
+              className="block px-4 py-3 hover:bg-slate-800/40"
+            >
               {content}
             </Link>
           ) : (

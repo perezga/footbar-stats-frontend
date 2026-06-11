@@ -86,7 +86,11 @@ export function binsInWindow(bins: DistanceBin[], startMs?: number, endMs?: numb
  * active neighbour are excluded. For matches, pass the fixture-derived window
  * (`matchWindow`) so only bins during the match are considered.
  */
-export function playedMinutesFromBins(bins: DistanceBin[], startMs?: number, endMs?: number): number {
+export function playedMinutesFromBins(
+  bins: DistanceBin[],
+  startMs?: number,
+  endMs?: number,
+): number {
   const ranged = binsInWindow(bins, startMs, endMs);
   let played = 0;
   for (let i = 0; i < ranged.length; i++) {
@@ -109,7 +113,9 @@ const madridDate = new Intl.DateTimeFormat('en-CA', {
 /** Calendar days from today (Madrid) to a fixture date 'YYYY-MM-DD'. */
 export function daysUntil(date: string): number {
   const today = madridDate.format(new Date()); // en-CA yields YYYY-MM-DD
-  return Math.round((Date.parse(`${date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000);
+  return Math.round(
+    (Date.parse(`${date}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000,
+  );
 }
 
 /** Countdown chip text for an upcoming fixture (Spanish, fixture UI). */

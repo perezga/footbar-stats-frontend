@@ -4,8 +4,21 @@ export type FavFoot = 'r' | 'l' | 'b' | 'n';
 export type Gender = 'm' | 'f';
 export type MatchType = '11' | 'ss' | 'tr' | 'ru';
 export type Position =
-  | 'gk' | 'rb' | 'cb' | 'lb' | 'rwb' | 'lwb'
-  | 'cdm' | 'cm' | 'cam' | 'rm' | 'lm' | 'rw' | 'lw' | 'cf' | 'st';
+  | 'gk'
+  | 'rb'
+  | 'cb'
+  | 'lb'
+  | 'rwb'
+  | 'lwb'
+  | 'cdm'
+  | 'cm'
+  | 'cam'
+  | 'rm'
+  | 'lm'
+  | 'rw'
+  | 'lw'
+  | 'cf'
+  | 'st';
 export type Strength = 'tec' | 'pac' | 'sta' | 'sho' | 'un';
 
 export interface GeoPoint {

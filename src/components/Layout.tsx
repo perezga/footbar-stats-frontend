@@ -43,9 +43,7 @@ export function Layout() {
                 end={t.to === '/'}
                 className={({ isActive }) =>
                   `px-3 py-1.5 rounded-md text-sm ${
-                    isActive
-                      ? 'bg-brand text-white'
-                      : 'text-slate-300 hover:bg-slate-800'
+                    isActive ? 'bg-brand text-white' : 'text-slate-300 hover:bg-slate-800'
                   }`
                 }
               >

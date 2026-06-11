@@ -4,18 +4,19 @@ import type { TrendPoint } from '../api/types.js';
 import { RecordsCard } from '../components/RecordsCard.js';
 import { TrendChart, type TrendSeries } from '../components/TrendChart.js';
 
-const METRICS: { key: string; label: string; unit?: string; transform?: (v: number) => number }[] = [
-  { key: 'distance', label: 'Distance (km)', unit: 'km', transform: (v) => v / 1000 },
-  { key: 'sprint_count', label: 'Sprints' },
-  { key: 'sprint_speed', label: 'Top sprint (km/h)', unit: 'km/h', transform: (v) => v * 3.6 },
-  { key: 'shot_speed', label: 'Top shot (km/h)', unit: 'km/h', transform: (v) => v * 3.6 },
-  { key: 'pass_count', label: 'Passes' },
-  { key: 'activity', label: 'Activity %', unit: '%', transform: (v) => (v <= 1 ? v * 100 : v) },
-  { key: 'playing_time', label: 'Playing time (min)', unit: 'min', transform: (v) => v / 60 },
-  { key: 'hsr_plus', label: 'High-speed running (km)', unit: 'km', transform: (v) => v / 1000 },
-  { key: 'time_running', label: 'Time running (min)', unit: 'min', transform: (v) => v / 60 },
-  { key: 'dribble_count', label: 'Dribbles' },
-];
+const METRICS: { key: string; label: string; unit?: string; transform?: (v: number) => number }[] =
+  [
+    { key: 'distance', label: 'Distance (km)', unit: 'km', transform: (v) => v / 1000 },
+    { key: 'sprint_count', label: 'Sprints' },
+    { key: 'sprint_speed', label: 'Top sprint (km/h)', unit: 'km/h', transform: (v) => v * 3.6 },
+    { key: 'shot_speed', label: 'Top shot (km/h)', unit: 'km/h', transform: (v) => v * 3.6 },
+    { key: 'pass_count', label: 'Passes' },
+    { key: 'activity', label: 'Activity %', unit: '%', transform: (v) => (v <= 1 ? v * 100 : v) },
+    { key: 'playing_time', label: 'Playing time (min)', unit: 'min', transform: (v) => v / 60 },
+    { key: 'hsr_plus', label: 'High-speed running (km)', unit: 'km', transform: (v) => v / 1000 },
+    { key: 'time_running', label: 'Time running (min)', unit: 'min', transform: (v) => v / 60 },
+    { key: 'dribble_count', label: 'Dribbles' },
+  ];
 
 const MATCH_COLOR = '#F7335D'; // partidos (brand)
 const TRAIN_COLOR = '#38bdf8'; // entrenamientos (sky)

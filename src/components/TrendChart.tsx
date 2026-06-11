@@ -41,9 +41,7 @@ export const TrendChart = memo(function TrendChart({ series, unit }: Props) {
       byDate.set(p.start_date, row);
     }
   }
-  const data = [...byDate.values()].sort((a, b) =>
-    String(a.sort).localeCompare(String(b.sort)),
-  );
+  const data = [...byDate.values()].sort((a, b) => String(a.sort).localeCompare(String(b.sort)));
 
   return (
     <ResponsiveContainer width="100%" height={300}>

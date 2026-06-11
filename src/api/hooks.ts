@@ -61,7 +61,8 @@ export function useSessions(filters: SessionFilters, enabled: boolean) {
 export function useRefreshSessions() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => api<{ ok: true; last_sync: number }>('/api/sessions/refresh', { method: 'POST' }),
+    mutationFn: () =>
+      api<{ ok: true; last_sync: number }>('/api/sessions/refresh', { method: 'POST' }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sessions'] });
       qc.invalidateQueries({ queryKey: ['records'] });

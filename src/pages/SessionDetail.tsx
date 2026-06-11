@@ -9,10 +9,10 @@ import {
   firstActiveWindow,
   formatDateTime,
   formatKickoff,
-  matchWindow,
   MATCH_TYPE_LABEL,
-  mToKm,
+  matchWindow,
   msToKmh,
+  mToKm,
   pct,
   playedMinutesFromBins,
   positionLabel,
@@ -70,9 +70,7 @@ export function SessionDetail() {
         )}
         <h1 className="text-2xl font-semibold text-slate-100 mt-2">{s.title || 'Untitled'}</h1>
         <div className="text-slate-400 text-sm mt-1">
-          {s.fixture
-            ? formatKickoff(s.fixture.date, s.fixture.time)
-            : formatDateTime(s.start_date)}{' '}
+          {s.fixture ? formatKickoff(s.fixture.date, s.fixture.time) : formatDateTime(s.start_date)}{' '}
           · {MATCH_TYPE_LABEL[s.match_type]} · {positionLabel(s.position)}
           {typeof s.score_stars === 'number' && (
             <span className="ml-3 text-brand">★ {s.score_stars.toFixed(1)}</span>

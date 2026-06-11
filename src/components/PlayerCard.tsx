@@ -1,10 +1,4 @@
-import type {
-  MatchListItem,
-  PlayerStats,
-  Profile,
-  RecordEntry,
-  Scorer,
-} from '../api/types.js';
+import type { MatchListItem, PlayerStats, Profile, RecordEntry, Scorer } from '../api/types.js';
 
 interface Props {
   profile: Profile;
@@ -71,7 +65,7 @@ export function PlayerCard({ profile, stats, scorer, records, matches }: Props) 
       <div className="rounded-[calc(1.5rem-3px)] bg-gradient-to-b from-yellow-300 via-amber-400 to-yellow-600 px-5 pb-4 pt-4 text-amber-950">
         <div className="flex items-start justify-between">
           <div className="flex flex-col items-center leading-none">
-            <div className="text-5xl font-black">{ovr ?? (stats?.dorsal ?? '—')}</div>
+            <div className="text-5xl font-black">{ovr ?? stats?.dorsal ?? '—'}</div>
             <div className="mt-1 text-lg font-bold tracking-widest">{position}</div>
             {profile.country_flag && (
               <img

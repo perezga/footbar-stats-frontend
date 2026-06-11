@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import { ErrorAlert } from '../components/ErrorAlert.js';
 import {
   CartesianGrid,
   Line,
@@ -9,14 +8,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import {
-  useFixtures,
-  useRefreshRfaf,
-  useScorers,
-  useSeasons,
-  useStandings,
-} from '../api/hooks.js';
+import { useFixtures, useRefreshRfaf, useScorers, useSeasons, useStandings } from '../api/hooks.js';
 import type { Fixture, RfafForm, Scorer, Standing } from '../api/types.js';
+import { ErrorAlert } from '../components/ErrorAlert.js';
 import { formatDate, RESULT_STYLE } from '../lib/units.js';
 
 type Tab = 'standings' | 'fixtures' | 'scorers';
@@ -102,13 +96,17 @@ function FixturesList({ rows, ownTeam }: { rows: Fixture[]; ownTeam: string | nu
           <div key={f.matchday} className="flex items-center gap-3 px-4 py-3 text-sm">
             <div className="w-8 text-center text-xs text-slate-500">J{f.matchday}</div>
             <div className="flex-1 grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-              <span className={`text-right ${isOurs(f.home) ? 'font-semibold text-slate-100' : 'text-slate-300'}`}>
+              <span
+                className={`text-right ${isOurs(f.home) ? 'font-semibold text-slate-100' : 'text-slate-300'}`}
+              >
                 {f.home}
               </span>
               <span className="px-2 font-mono text-slate-100">
                 {played ? `${f.home_goals} - ${f.away_goals}` : 'vs'}
               </span>
-              <span className={`${isOurs(f.away) ? 'font-semibold text-slate-100' : 'text-slate-300'}`}>
+              <span
+                className={`${isOurs(f.away) ? 'font-semibold text-slate-100' : 'text-slate-300'}`}
+              >
                 {f.away}
               </span>
             </div>
@@ -142,7 +140,10 @@ function PointsEvolution({ rows }: { rows: Fixture[] }) {
     return rows
       .filter((f) => f.result !== null)
       .sort((a, b) => a.matchday - b.matchday)
-      .map((f) => ({ label: `J${f.matchday}`, points: (pts += POINTS[f.result!]), result: f.result! }));
+      .map((f) => {
+        pts += POINTS[f.result!];
+        return { label: `J${f.matchday}`, points: pts, result: f.result! };
+      });
   }, [rows]);
   if (data.length === 0) return null;
 
@@ -166,7 +167,12 @@ function PointsEvolution({ rows }: { rows: Fixture[] }) {
               stroke="#F7335D"
               strokeWidth={2}
               isAnimationActive={false}
-              dot={(p: { cx?: number; cy?: number; index?: number; payload?: { result: RfafForm } }) => (
+              dot={(p: {
+                cx?: number;
+                cy?: number;
+                index?: number;
+                payload?: { result: RfafForm };
+              }) => (
                 <circle
                   key={p.index}
                   cx={p.cx}
@@ -261,7 +267,9 @@ export function League() {
           {seasons.data && (
             <select
               value={season || seasons.data.current}
-              onChange={(e) => setSeason(e.target.value === seasons.data.current ? '' : e.target.value)}
+              onChange={(e) =>
+                setSeason(e.target.value === seasons.data.current ? '' : e.target.value)
+              }
               className="rounded-md border border-slate-700 bg-brand-panel px-2 py-1 text-slate-300 hover:border-slate-500"
             >
               {seasons.data.results.map((s) => (

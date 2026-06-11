@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { RecordEntry } from '../api/types.js';
-import { formatDate, mToKm, msToKmh, secToClock } from '../lib/units.js';
+import { formatDate, msToKmh, mToKm, secToClock } from '../lib/units.js';
 
 interface Props {
   records: RecordEntry[];
@@ -40,9 +40,7 @@ export function RecordsCard({ records, title = 'Personal records' }: Props) {
                 {r.session_title} · {formatDate(r.start_date)}
               </Link>
             </div>
-            <div className="text-xl font-semibold text-brand">
-              {formatValue(r.metric, r.value)}
-            </div>
+            <div className="text-xl font-semibold text-brand">{formatValue(r.metric, r.value)}</div>
           </li>
         ))}
       </ul>

@@ -86,8 +86,12 @@ export function FixtureLegLine({ leg }: { leg: FixtureLeg }) {
         )}
       </span>
       <span
-        title={leg.sessionId !== null ? 'Estadísticas Footbar disponibles' : 'Sin estadísticas Footbar'}
-        className={leg.sessionId !== null ? 'ml-auto text-sm' : 'ml-auto text-sm opacity-25 grayscale'}
+        title={
+          leg.sessionId !== null ? 'Estadísticas Footbar disponibles' : 'Sin estadísticas Footbar'
+        }
+        className={
+          leg.sessionId !== null ? 'ml-auto text-sm' : 'ml-auto text-sm opacity-25 grayscale'
+        }
       >
         📊
       </span>
