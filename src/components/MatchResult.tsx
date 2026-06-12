@@ -1,12 +1,6 @@
 import { Link } from 'react-router-dom';
-import type { MatchListItem, PlayerMatchEvent, Position, SessionFixture } from '../api/types.js';
-import {
-  formatDate,
-  formatKickoff,
-  MATCH_TYPE_LABEL,
-  positionLabel,
-  RESULT_STYLE,
-} from '../lib/units.js';
+import type { PlayerMatchEvent, Position, SessionFixture } from '../api/types.js';
+import { formatKickoff, positionLabel, RESULT_STYLE } from '../lib/units.js';
 
 const RESULT_LABEL = { W: 'Victoria', D: 'Empate', L: 'Derrota' } as const;
 
@@ -151,7 +145,7 @@ function ResultBadge({ result }: { result: SessionFixture['result'] }) {
  * Official RFAF match result attached to a session. `compact` renders a single
  * line for list rows; the full form adds the matchday/venue context line.
  */
-export function FixtureResult({ fixture, compact }: { fixture: SessionFixture; compact?: boolean }) {
+export function MatchResult({ fixture, compact }: { fixture: SessionFixture; compact?: boolean }) {
   const played = fixture.home_goals !== null && fixture.away_goals !== null;
   // Score follows the fixture name order: home on the left, away on the right —
   // so the player's goals land on whichever side their team plays.
@@ -196,55 +190,5 @@ export function FixtureResult({ fixture, compact }: { fixture: SessionFixture; c
       </div>
       <PlayerEvents events={fixture.events} />
     </div>
-  );
-}
-
-/** One row of the matches+sessions feed. */
-export function MatchResult({ match }: { match: MatchListItem }) {
-  const isFixtureOnly = match.id === null;
-  const f = match.fixture;
-
-  const content = (
-    <div className="rounded-xl bg-brand-panel border border-slate-800 p-4 hover:bg-brand-panel/80 transition-colors">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-            {formatDate(match.start_date)}
-          </span>
-          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
-            {MATCH_TYPE_LABEL[match.match_type]}
-          </span>
-        </div>
-        {typeof match.score_stars === 'number' && (
-          <span className="text-sm font-bold text-brand">★ {match.score_stars.toFixed(1)}</span>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between gap-4">
-        <div className="font-bold text-slate-100 truncate flex-1">{match.title}</div>
-        {f && <FixtureResult fixture={f} compact />}
-      </div>
-
-      {match.other_leg && (
-        <div className="mt-3 pt-3 border-t border-slate-800/50">
-          <FixtureLegLine
-            leg={{
-              label: match.leg === 1 ? 'Vuelta' : 'Ida',
-              sessionId: match.other_leg.session_id,
-              fixture: match.other_leg.fixture,
-              position: match.other_leg.position,
-              scoreStars: match.other_leg.score_stars,
-            }}
-          />
-        </div>
-      )}
-    </div>
-  );
-
-  if (isFixtureOnly) return content;
-  return (
-    <Link to={`/sessions/${match.id}`} className="block">
-      {content}
-    </Link>
   );
 }
