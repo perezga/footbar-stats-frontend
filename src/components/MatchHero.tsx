@@ -8,7 +8,7 @@ import {
   madridInstantMs,
   matchWindow,
 } from '../lib/units.js';
-import { MatchResult } from './MatchResult.js';
+import { FixtureResult } from './MatchResult.js';
 
 interface FlatFixture {
   fixture: SessionFixture;
@@ -72,7 +72,7 @@ export function MatchHero({ matches }: { matches: MatchListItem[] }) {
       {last && (
         <div className="space-y-1">
           <div className="px-1 text-xs uppercase tracking-wider text-slate-400">Último partido</div>
-          <MatchResult fixture={last.fixture} />
+          <FixtureResult fixture={last.fixture} />
           {last.sessionId !== null && (
             <Link
               to={`/sessions/${last.sessionId}`}

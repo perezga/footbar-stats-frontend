@@ -1,7 +1,7 @@
 import { Link, useParams } from 'react-router-dom';
 import { useAverages, useRefreshSession, useSession } from '../api/hooks.js';
 import { ErrorAlert } from '../components/ErrorAlert.js';
-import { MatchResult } from '../components/MatchResult.js';
+import { FixtureResult } from '../components/MatchResult.js';
 import { PaceZones } from '../components/PaceZones.js';
 import { SessionMap } from '../components/SessionMap.js';
 import { StatTile } from '../components/StatTile.js';
@@ -78,7 +78,7 @@ export function SessionDetail() {
         </div>
       </div>
 
-      {s.fixture && <MatchResult fixture={s.fixture} />}
+      {s.fixture && <FixtureResult fixture={s.fixture} />}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatTile
