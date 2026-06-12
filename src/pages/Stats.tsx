@@ -7,6 +7,7 @@ import { TrendChart, type TrendSeries } from '../components/TrendChart.js';
 const METRICS: { key: string; label: string; unit?: string; transform?: (v: number) => number }[] =
   [
     { key: 'distance', label: 'Distance (km)', unit: 'km', transform: (v) => v / 1000 },
+    { key: 'goals', label: 'Goals' },
     { key: 'sprint_count', label: 'Sprints' },
     { key: 'sprint_speed', label: 'Top sprint (km/h)', unit: 'km/h', transform: (v) => v * 3.6 },
     { key: 'shot_speed', label: 'Top shot (km/h)', unit: 'km/h', transform: (v) => v * 3.6 },

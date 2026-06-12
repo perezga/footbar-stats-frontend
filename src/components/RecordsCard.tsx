@@ -33,12 +33,18 @@ export function RecordsCard({ records, title = 'Personal records' }: Props) {
           <li key={r.metric} className="px-4 py-3 flex items-center justify-between gap-4">
             <div>
               <div className="text-sm text-slate-300">{r.metric}</div>
-              <Link
-                to={`/sessions/${r.session_id}`}
-                className="text-xs text-slate-500 hover:text-brand"
-              >
-                {r.session_title} · {formatDate(r.start_date)}
-              </Link>
+              {r.session_id !== null ? (
+                <Link
+                  to={`/sessions/${r.session_id}`}
+                  className="text-xs text-slate-500 hover:text-brand"
+                >
+                  {r.session_title} · {formatDate(r.start_date)}
+                </Link>
+              ) : (
+                <span className="text-xs text-slate-500">
+                  {r.session_title} · {formatDate(r.start_date)}
+                </span>
+              )}
             </div>
             <div className="text-xl font-semibold text-brand">{formatValue(r.metric, r.value)}</div>
           </li>

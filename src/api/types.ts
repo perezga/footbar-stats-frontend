@@ -167,13 +167,15 @@ export interface SessionListResponse {
 export interface RecordEntry {
   metric: string;
   value: number;
-  session_id: number;
+  /** Null when the record's match has no Footbar session (fixture-only). */
+  session_id: number | null;
   session_title: string;
   start_date: string;
 }
 
 export interface TrendPoint {
-  session_id: number;
+  /** Null when the point's match has no Footbar session (fixture-only). */
+  session_id: number | null;
   start_date: string;
   title: string;
   value: number;
