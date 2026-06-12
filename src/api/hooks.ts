@@ -37,6 +37,26 @@ export function useProfile(enabled: boolean) {
   });
 }
 
+export function useLinkRfaf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (playerId: string) =>
+      api<{ ok: true; rfaf_player_id: string }>('/api/profile/rfaf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['profile'] });
+      qc.invalidateQueries({ queryKey: ['sessions'] });
+      qc.invalidateQueries({ queryKey: ['records'] });
+      qc.invalidateQueries({ queryKey: ['trends'] });
+      qc.invalidateQueries({ queryKey: ['level'] });
+      qc.invalidateQueries({ queryKey: ['rfaf'] });
+    },
+  });
+}
+
 export interface SessionFilters {
   matchType?: MatchType | undefined;
   limit?: number;

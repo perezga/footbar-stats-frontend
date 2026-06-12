@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   useLevel,
   usePlayerStats,
@@ -5,6 +6,7 @@ import {
   useRecords,
   useScorers,
   useSessions,
+  useLinkRfaf,
 } from '../api/hooks.js';
 import type { PlayerStats } from '../api/types.js';
 import { ErrorAlert } from '../components/ErrorAlert.js';
@@ -14,55 +16,75 @@ import { PlayerLevelCard } from '../components/PlayerLevelCard.js';
 import { StatTile } from '../components/StatTile.js';
 
 const FOOT_LABEL: Record<string, string> = { r: 'Right', l: 'Left', b: 'Both', n: 'None' };
-const GENDER_LABEL: Record<string, string> = { m: 'Male', f: 'Female' };
-const STRENGTH_LABEL: Record<string, string> = {
-  tec: 'Technical',
-  pac: 'Sprinter',
-  sta: 'Endurant',
-  sho: 'Shooter',
-  un: 'Undefined',
-};
 
-/** Cumulative season stats from Universo RFAF for the current season. */
-function SeasonStats({ stats }: { stats: PlayerStats }) {
-  const tiles: { label: string; value: string }[] = [
-    ...stats.stats.map((s) => ({ label: s.name, value: String(s.value) })),
-    ...stats.cards.map((c) => ({ label: c.name, value: String(c.value) })),
-  ];
-  // minutes_played is null when the competition doesn't publish minutes; the
-  // per-game average comes back as 0 in that case, so gate both on it.
-  if (stats.minutes_played !== null) {
-    tiles.push({ label: 'Minutos jugados', value: String(stats.minutes_played) });
-    if (stats.minutes_per_game !== null) {
-      tiles.push({ label: 'Minutos por partido', value: String(stats.minutes_per_game) });
-    }
+function RfafLinkSection({ currentId }: { currentId: string | null | undefined }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState(currentId ?? '');
+  const link = useLinkRfaf();
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!val.trim()) return;
+    link.mutate(val.trim(), {
+      onSuccess: () => setEditing(false),
+    });
+  };
+
+  if (!editing && currentId) {
+    return (
+      <div className="mt-8 rounded-xl border border-slate-700/50 bg-slate-800/30 p-5">
+        <h3 className="text-lg font-bold text-slate-100">RFAF Profile</h3>
+        <p className="mt-1 text-sm text-slate-400">Linked to player ID: <span className="font-mono text-slate-300">{currentId}</span></p>
+        <button
+          onClick={() => setEditing(true)}
+          className="mt-3 text-sm font-medium text-brand hover:underline"
+        >
+          Change ID
+        </button>
+      </div>
+    );
   }
-  if (tiles.length === 0) return null;
 
   return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="text-lg font-semibold text-slate-100">
-          Estadísticas acumuladas {stats.season}
-        </h2>
-        <div className="text-sm text-slate-400">
-          {[stats.team, stats.category, stats.dorsal !== null ? `Dorsal ${stats.dorsal}` : null]
-            .filter(Boolean)
-            .join(' · ')}
-        </div>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {tiles.map((t) => (
-          <StatTile key={t.label} label={t.label} value={t.value} />
-        ))}
-      </div>
-    </section>
+    <div className="mt-8 rounded-xl border border-slate-700/50 bg-slate-800/30 p-5">
+      <h3 className="text-lg font-bold text-slate-100">{currentId ? 'Change' : 'Link'} RFAF Profile</h3>
+      <p className="mt-1 mb-4 text-sm text-slate-400">
+        Enter your Universo RFAF player ID (<code>cod_player</code>) to sync your league matches and goals.
+      </p>
+      <form onSubmit={handleSave} className="flex gap-2">
+        <input
+          type="text"
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          placeholder="e.g. 123456"
+          className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
+          disabled={link.isPending}
+        />
+        <button
+          type="submit"
+          disabled={link.isPending || !val.trim()}
+          className="rounded-lg bg-brand px-4 py-2 font-semibold text-white hover:bg-brand/90 disabled:opacity-50"
+        >
+          {link.isPending ? 'Saving...' : 'Save'}
+        </button>
+        {editing && currentId && (
+          <button
+            type="button"
+            onClick={() => setEditing(false)}
+            className="rounded-lg border border-slate-600 px-4 py-2 font-semibold text-slate-300 hover:bg-slate-700"
+            disabled={link.isPending}
+          >
+            Cancel
+          </button>
+        )}
+      </form>
+    </div>
   );
 }
 
 export function Profile() {
   const q = useProfile(true);
-  const rfaf = usePlayerStats(true);
+  const s = usePlayerStats(true, '');
   const records = useRecords('11', true);
   const scorers = useScorers(true, '');
   const matches = useSessions({ matchType: '11', includeFixtures: true, limit: 200 }, true);
@@ -70,26 +92,36 @@ export function Profile() {
   if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
   if (q.error) return <ErrorAlert error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return null;
-  const p = q.data;
-  const name = `${p.first_name} ${p.last_name}`.trim() || p.nickname;
+
+  const profile = q.data;
+  const stats = s.data?.results;
+  const scorer = scorers.data?.results.find((c) => c.own);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        {p.profile_pic && (
+      <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
+        {profile.profile_pic && (
           <img
-            src={p.profile_pic}
+            src={profile.profile_pic}
             alt=""
-            className="h-20 w-20 rounded-full border border-slate-700"
+            className="h-28 w-28 shrink-0 rounded-full border-4 border-slate-800 bg-slate-900 object-cover shadow-lg"
           />
         )}
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-100">{name}</h1>
-          <div className="text-slate-400">@{p.nickname}</div>
+        <div className="text-center sm:pt-2 sm:text-left">
+          <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+            {profile.nickname || profile.first_name}
+          </h1>
+          <div className="mt-1.5 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm font-medium text-slate-400 sm:justify-start">
+            {profile.fav_position && (
+              <span className="uppercase tracking-wider">{profile.fav_position}</span>
+            )}
+            {profile.fav_foot && (
+              <span>{FOOT_LABEL[profile.fav_foot] ?? profile.fav_foot} foot</span>
+            )}
+            <span>{Math.round(profile.height)} cm</span>
+            <span>{Math.round(profile.weight)} kg</span>
+          </div>
         </div>
-        {p.country_flag && (
-          <img src={p.country_flag} alt="" className="h-8 w-auto ml-auto rounded" />
-        )}
       </div>
 
       {level.data && <PlayerLevelCard data={level.data} />}
@@ -97,31 +129,30 @@ export function Profile() {
       {matches.data && <MatchHero matches={matches.data.results} />}
 
       <PlayerCard
-        profile={p}
-        stats={rfaf.data?.results}
-        scorer={scorers.data?.results.find((s) => s.own)}
+        profile={profile}
+        stats={stats}
+        scorer={scorer}
         records={records.data?.records ?? []}
         matches={matches.data?.results ?? []}
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatTile label="Age category" value={p.age_category} />
-        <StatTile label="Favourite position" value={p.fav_position || '—'} />
-        <StatTile label="Favourite foot" value={FOOT_LABEL[p.fav_foot ?? 'n'] ?? '—'} />
-        <StatTile label="Player type" value={STRENGTH_LABEL[p.strength] ?? '—'} />
-        <StatTile label="Gender" value={GENDER_LABEL[p.gender] ?? '—'} />
-        <StatTile label="Date of birth" value={p.d_o_b || '—'} />
-        <StatTile label="Height" value={p.height ? `${(p.height * 100).toFixed(0)} cm` : '—'} />
-        <StatTile label="Weight" value={p.weight ? `${p.weight.toFixed(0)} kg` : '—'} />
-      </div>
+      <RfafLinkSection currentId={profile.rfaf_player_id} />
 
-      {rfaf.isLoading && <div className="text-slate-400">Loading season stats…</div>}
-      {rfaf.error && (
-        <div className="text-sm text-slate-500">
-          Season stats unavailable: {(rfaf.error as Error).message}
+      {stats && (
+        <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-5">
+          <div className="mb-4 flex items-baseline justify-between border-b border-slate-700/50 pb-4">
+            <h2 className="text-lg font-bold text-slate-100">LIGA {stats.season}</h2>
+            <div className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+              {stats.team}
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {stats.stats.map((st) => (
+              <StatTile key={st.name} label={st.name} value={st.value} compact />
+            ))}
+          </div>
         </div>
       )}
-      {rfaf.data && <SeasonStats stats={rfaf.data.results} />}
     </div>
   );
 }

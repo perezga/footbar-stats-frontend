@@ -27,21 +27,23 @@ export interface GeoPoint {
 }
 
 export interface Profile {
-  user_id: number;
+  user_id: number | null;
   nickname: string;
-  fav_foot: FavFoot | null;
+  fav_foot: string | null;
   fav_position: string;
   first_name: string;
   last_name: string;
-  gender: Gender;
+  gender: string;
   d_o_b: string;
   profile_pic: string;
   age_category: string;
   height: number;
   weight: number;
-  strength: Strength;
+  strength: string;
   country_flag: string;
+  rfaf_player_id?: string | null;
 }
+
 
 /** One of the tracked player's in-match events (goals, cards). */
 export interface PlayerMatchEvent {
