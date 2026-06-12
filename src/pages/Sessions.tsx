@@ -15,7 +15,7 @@ import { formatDateTime, formatKickoff, MATCH_TYPE_LABEL, positionLabel } from '
 const PAGE_SIZE = 25;
 
 export function Sessions() {
-  const [matchType, setMatchType] = useState<MatchType | undefined>(undefined);
+  const [matchType, setMatchType] = useState<MatchType | undefined>('11');
   const [page, setPage] = useState(0);
   const q = useSessions(
     { matchType, limit: PAGE_SIZE, offset: page * PAGE_SIZE, includeFixtures: true },
