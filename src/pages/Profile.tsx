@@ -1,8 +1,16 @@
-import { usePlayerStats, useProfile, useRecords, useScorers, useSessions } from '../api/hooks.js';
+import {
+  useLevel,
+  usePlayerStats,
+  useProfile,
+  useRecords,
+  useScorers,
+  useSessions,
+} from '../api/hooks.js';
 import type { PlayerStats } from '../api/types.js';
 import { ErrorAlert } from '../components/ErrorAlert.js';
 import { MatchHero } from '../components/MatchHero.js';
 import { PlayerCard } from '../components/PlayerCard.js';
+import { PlayerLevelCard } from '../components/PlayerLevelCard.js';
 import { StatTile } from '../components/StatTile.js';
 
 const FOOT_LABEL: Record<string, string> = { r: 'Right', l: 'Left', b: 'Both', n: 'None' };
@@ -58,6 +66,7 @@ export function Profile() {
   const records = useRecords('11', true);
   const scorers = useScorers(true, '');
   const matches = useSessions({ matchType: '11', includeFixtures: true, limit: 200 }, true);
+  const level = useLevel(true);
   if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
   if (q.error) return <ErrorAlert error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return null;
@@ -82,6 +91,8 @@ export function Profile() {
           <img src={p.country_flag} alt="" className="h-8 w-auto ml-auto rounded" />
         )}
       </div>
+
+      {level.data && <PlayerLevelCard data={level.data} />}
 
       {matches.data && <MatchHero matches={matches.data.results} />}
 

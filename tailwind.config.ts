@@ -4,6 +4,10 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        // Condensed sport face for the FUT-style player card.
+        card: ['Oswald', 'Arial Narrow', 'sans-serif'],
+      },
       colors: {
         brand: {
           DEFAULT: '#F7335D',

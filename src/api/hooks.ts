@@ -3,6 +3,7 @@ import { api } from './client.js';
 import type {
   AveragesResponse,
   Fixture,
+  LevelResponse,
   MatchType,
   PlayerStatsResponse,
   Profile,
@@ -67,6 +68,7 @@ export function useRefreshSessions() {
       qc.invalidateQueries({ queryKey: ['sessions'] });
       qc.invalidateQueries({ queryKey: ['records'] });
       qc.invalidateQueries({ queryKey: ['trends'] });
+      qc.invalidateQueries({ queryKey: ['level'] });
     },
   });
 }
@@ -88,7 +90,17 @@ export function useRefreshSession(id: number) {
       qc.invalidateQueries({ queryKey: ['sessions'] });
       qc.invalidateQueries({ queryKey: ['records'] });
       qc.invalidateQueries({ queryKey: ['trends'] });
+      qc.invalidateQueries({ queryKey: ['level'] });
     },
+  });
+}
+
+/** Player level derived from the last matches (see the profile banner). */
+export function useLevel(enabled: boolean) {
+  return useQuery({
+    queryKey: ['level'],
+    queryFn: () => api<LevelResponse>('/api/stats/level'),
+    enabled,
   });
 }
 

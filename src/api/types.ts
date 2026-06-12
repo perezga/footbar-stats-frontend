@@ -181,6 +181,37 @@ export interface TrendPoint {
   value: number;
 }
 
+// --- Player level (derived from the last matches) ---
+
+export type PlayerLevelId = 'principiante' | 'novato' | 'amateur' | 'pro' | 'goat';
+
+export interface LevelReason {
+  metric: string;
+  /** Criterion name shown to the user (Spanish, like the profile UI). */
+  label: string;
+  /** Formatted value ('5.2 km', '27.4 km/h'). */
+  display: string;
+  /** Level this criterion alone would give (0..4). */
+  level: number;
+  level_name: PlayerLevelId;
+}
+
+export interface LevelMatchRef {
+  session_id: number;
+  title: string;
+  start_date: string;
+}
+
+export interface LevelResponse {
+  /** Null when no match details are cached yet. */
+  level: PlayerLevelId | null;
+  level_index: number | null;
+  window: number;
+  /** The matches the level was derived from (newest first). */
+  matches: LevelMatchRef[];
+  reasons: LevelReason[];
+}
+
 // --- RFAF league data ---
 
 export type RfafForm = 'W' | 'D' | 'L';
