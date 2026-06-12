@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client.js';
 import type {
+  AuthStatus,
   AveragesResponse,
   Fixture,
   LevelResponse,
@@ -17,15 +18,62 @@ import type {
   TrendPoint,
 } from './types.js';
 
-export interface AuthStatus {
-  authenticated: boolean;
-  user_id: number | null;
-}
-
 export function useAuthStatus() {
   return useQuery({
     queryKey: ['auth-status'],
     queryFn: () => api<AuthStatus>('/auth/status'),
+  });
+}
+
+export function useSignup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) =>
+      api<{ ok: true; user_id: number }>('/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['auth-status'] }),
+  });
+}
+
+export function useLogin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: any) =>
+      api<{ ok: true; user_id: number }>('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      qc.clear();
+      qc.invalidateQueries({ queryKey: ['auth-status'] });
+    },
+  });
+}
+
+export function useLogout() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<{ ok: true }>('/auth/logout', { method: 'POST' }),
+    onSuccess: () => qc.clear(),
+  });
+}
+
+export function useUnlinkFootbar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api<{ ok: true }>('/auth/footbar/unlink', { method: 'POST' }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['auth-status'] });
+      qc.invalidateQueries({ queryKey: ['profile'] });
+      qc.invalidateQueries({ queryKey: ['sessions'] });
+      qc.invalidateQueries({ queryKey: ['records'] });
+      qc.invalidateQueries({ queryKey: ['trends'] });
+      qc.invalidateQueries({ queryKey: ['level'] });
+    },
   });
 }
 
@@ -202,13 +250,5 @@ export function useRefreshRfaf() {
     mutationFn: (season: string) =>
       api<{ ok: true }>(`/api/rfaf/refresh${seasonQs(season)}`, { method: 'POST' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['rfaf'] }),
-  });
-}
-
-export function useLogout() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => api<{ ok: true }>('/auth/logout', { method: 'POST' }),
-    onSuccess: () => qc.clear(),
   });
 }

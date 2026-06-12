@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import {
+  useAuthStatus,
   useLevel,
+  useLinkRfaf,
   usePlayerStats,
   useProfile,
   useRecords,
   useScorers,
   useSessions,
-  useLinkRfaf,
+  useUnlinkFootbar,
 } from '../api/hooks.js';
-import type { PlayerStats } from '../api/types.js';
 import { ErrorAlert } from '../components/ErrorAlert.js';
 import { MatchHero } from '../components/MatchHero.js';
 import { PlayerCard } from '../components/PlayerCard.js';
@@ -17,81 +18,112 @@ import { StatTile } from '../components/StatTile.js';
 
 const FOOT_LABEL: Record<string, string> = { r: 'Right', l: 'Left', b: 'Both', n: 'None' };
 
-function RfafLinkSection({ currentId }: { currentId: string | null | undefined }) {
-  const [editing, setEditing] = useState(false);
-  const [val, setVal] = useState(currentId ?? '');
-  const link = useLinkRfaf();
+function AccountSettings() {
+  const { data: auth } = useAuthStatus();
+  const unlinkFootbar = useUnlinkFootbar();
+  const [rfafId, setRfafId] = useState('');
+  const linkRfaf = useLinkRfaf();
 
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!val.trim()) return;
-    link.mutate(val.trim(), {
-      onSuccess: () => setEditing(false),
-    });
-  };
-
-  if (!editing && currentId) {
-    return (
-      <div className="mt-8 rounded-xl border border-slate-700/50 bg-slate-800/30 p-5">
-        <h3 className="text-lg font-bold text-slate-100">RFAF Profile</h3>
-        <p className="mt-1 text-sm text-slate-400">Linked to player ID: <span className="font-mono text-slate-300">{currentId}</span></p>
-        <button
-          onClick={() => setEditing(true)}
-          className="mt-3 text-sm font-medium text-brand hover:underline"
-        >
-          Change ID
-        </button>
-      </div>
-    );
-  }
+  if (!auth) return null;
 
   return (
-    <div className="mt-8 rounded-xl border border-slate-700/50 bg-slate-800/30 p-5">
-      <h3 className="text-lg font-bold text-slate-100">{currentId ? 'Change' : 'Link'} RFAF Profile</h3>
-      <p className="mt-1 mb-4 text-sm text-slate-400">
-        Enter your Universo RFAF player ID (<code>cod_player</code>) to sync your league matches and goals.
-      </p>
-      <form onSubmit={handleSave} className="flex gap-2">
-        <input
-          type="text"
-          value={val}
-          onChange={(e) => setVal(e.target.value)}
-          placeholder="e.g. 123456"
-          className="flex-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-slate-100 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand"
-          disabled={link.isPending}
-        />
-        <button
-          type="submit"
-          disabled={link.isPending || !val.trim()}
-          className="rounded-lg bg-brand px-4 py-2 font-semibold text-white hover:bg-brand/90 disabled:opacity-50"
-        >
-          {link.isPending ? 'Saving...' : 'Save'}
-        </button>
-        {editing && currentId && (
-          <button
-            type="button"
-            onClick={() => setEditing(false)}
-            className="rounded-lg border border-slate-600 px-4 py-2 font-semibold text-slate-300 hover:bg-slate-700"
-            disabled={link.isPending}
-          >
-            Cancel
-          </button>
-        )}
-      </form>
+    <div className="space-y-6">
+      <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-5">
+        <h2 className="text-xl font-bold text-slate-100 mb-4">Connections</h2>
+
+        <div className="space-y-4">
+          {/* Footbar Connection */}
+          <div className="flex items-center justify-between p-4 rounded-lg bg-slate-900/50 border border-slate-800">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-3 h-3 rounded-full ${auth.links.footbar ? 'bg-green-500' : 'bg-slate-600'}`}
+              />
+              <div>
+                <div className="font-bold text-slate-200">Footbar Tracker</div>
+                <div className="text-xs text-slate-400">
+                  {auth.links.footbar ? 'Connected and syncing sessions' : 'Not connected'}
+                </div>
+              </div>
+            </div>
+            {auth.links.footbar ? (
+              <button
+                onClick={() => unlinkFootbar.mutate()}
+                className="text-sm font-bold text-red-500 hover:text-red-400 transition-colors"
+                disabled={unlinkFootbar.isPending}
+              >
+                {unlinkFootbar.isPending ? 'Unlinking...' : 'Disconnect'}
+              </button>
+            ) : (
+              <a
+                href="/auth/footbar/link"
+                className="text-sm font-bold text-brand hover:text-brand/80 transition-colors"
+              >
+                Connect Footbar
+              </a>
+            )}
+          </div>
+
+          {/* RFAF Connection */}
+          <div className="p-4 rounded-lg bg-slate-900/50 border border-slate-800">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-3 h-3 rounded-full ${auth.links.rfaf ? 'bg-green-500' : 'bg-slate-600'}`}
+                />
+                <div>
+                  <div className="font-bold text-slate-200">Universo RFAF</div>
+                  <div className="text-xs text-slate-400">
+                    {auth.links.rfaf ? 'Linked to player ID' : 'Not linked'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (rfafId.trim())
+                  linkRfaf.mutate(rfafId.trim(), { onSuccess: () => setRfafId('') });
+              }}
+              className="flex gap-2"
+            >
+              <input
+                type="text"
+                value={rfafId}
+                onChange={(e) => setRfafId(e.target.value)}
+                placeholder={
+                  auth.links.rfaf ? 'Change player ID...' : 'Enter player ID (e.g. 123456)'
+                }
+                className="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-brand outline-none"
+              />
+              <button
+                type="submit"
+                disabled={linkRfaf.isPending || !rfafId.trim()}
+                className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              >
+                {linkRfaf.isPending ? 'Linking...' : 'Update'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
 
 export function Profile() {
-  const q = useProfile(true);
-  const s = usePlayerStats(true, '');
-  const records = useRecords('11', true);
-  const scorers = useScorers(true, '');
-  const matches = useSessions({ matchType: '11', includeFixtures: true, limit: 200 }, true);
-  const level = useLevel(true);
-  if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
-  if (q.error) return <ErrorAlert error={q.error} onRetry={() => q.refetch()} />;
-  if (!q.data) return null;
+  const { data: auth } = useAuthStatus();
+  const q = useProfile(!!auth?.links.footbar);
+  const s = usePlayerStats(!!auth?.links.rfaf, '');
+  const records = useRecords('11', !!auth?.links.footbar);
+  const scorers = useScorers(!!auth?.links.rfaf, '');
+  const matches = useSessions(
+    { matchType: '11', includeFixtures: true, limit: 200 },
+    !!auth?.links.footbar,
+  );
+  const level = useLevel(!!auth?.links.footbar);
+
+  if (!auth) return null;
 
   const profile = q.data;
   const stats = s.data?.results;
@@ -100,27 +132,33 @@ export function Profile() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-        {profile.profile_pic && (
-          <img
-            src={profile.profile_pic}
-            alt=""
-            className="h-28 w-28 shrink-0 rounded-full border-4 border-slate-800 bg-slate-900 object-cover shadow-lg"
-          />
-        )}
+        <div className="h-28 w-28 shrink-0 rounded-full border-4 border-slate-800 bg-slate-900 flex items-center justify-center overflow-hidden shadow-lg">
+          {profile?.profile_pic ? (
+            <img src={profile.profile_pic} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-4xl font-black text-slate-700">
+              {(auth.user?.nickname || auth.user?.email || '?')[0]?.toUpperCase()}
+            </span>
+          )}
+        </div>
         <div className="text-center sm:pt-2 sm:text-left">
           <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
-            {profile.nickname || profile.first_name}
+            {profile?.nickname || auth.user?.nickname || auth.user?.email?.split('@')[0]}
           </h1>
-          <div className="mt-1.5 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm font-medium text-slate-400 sm:justify-start">
-            {profile.fav_position && (
-              <span className="uppercase tracking-wider">{profile.fav_position}</span>
-            )}
-            {profile.fav_foot && (
-              <span>{FOOT_LABEL[profile.fav_foot] ?? profile.fav_foot} foot</span>
-            )}
-            <span>{Math.round(profile.height)} cm</span>
-            <span>{Math.round(profile.weight)} kg</span>
-          </div>
+          <p className="text-slate-500 text-sm font-medium mt-1">{auth.user?.email}</p>
+
+          {profile && (
+            <div className="mt-2.5 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm font-medium text-slate-400 sm:justify-start">
+              {profile.fav_position && (
+                <span className="uppercase tracking-wider">{profile.fav_position}</span>
+              )}
+              {profile.fav_foot && (
+                <span>{FOOT_LABEL[profile.fav_foot] ?? profile.fav_foot} foot</span>
+              )}
+              <span>{Math.round(profile.height)} cm</span>
+              <span>{Math.round(profile.weight)} kg</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -128,15 +166,17 @@ export function Profile() {
 
       {matches.data && <MatchHero matches={matches.data.results} />}
 
-      <PlayerCard
-        profile={profile}
-        stats={stats}
-        scorer={scorer}
-        records={records.data?.records ?? []}
-        matches={matches.data?.results ?? []}
-      />
+      {auth.links.footbar && profile && (
+        <PlayerCard
+          profile={profile}
+          stats={stats}
+          scorer={scorer}
+          records={records.data?.records ?? []}
+          matches={matches.data?.results ?? []}
+        />
+      )}
 
-      <RfafLinkSection currentId={profile.rfaf_player_id} />
+      <AccountSettings />
 
       {stats && (
         <div className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-5">

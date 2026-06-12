@@ -21,6 +21,21 @@ export type Position =
   | 'st';
 export type Strength = 'tec' | 'pac' | 'sta' | 'sho' | 'un';
 
+export interface User {
+  id: number;
+  email: string;
+  nickname: string | null;
+}
+
+export interface AuthStatus {
+  authenticated: boolean;
+  user: User | null;
+  links: {
+    footbar: boolean;
+    rfaf: boolean;
+  };
+}
+
 export interface GeoPoint {
   type: 'Point';
   coordinates: [number, number] | [number, number, number];
@@ -43,7 +58,6 @@ export interface Profile {
   country_flag: string;
   rfaf_player_id?: string | null;
 }
-
 
 /** One of the tracked player's in-match events (goals, cards). */
 export interface PlayerMatchEvent {
