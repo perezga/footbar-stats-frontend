@@ -41,26 +41,32 @@ function AdvancedInsights() {
           <StatTile
             label="Contribución Goleadora"
             value={adv.goal_contribution_pct !== null ? `${adv.goal_contribution_pct.toFixed(1)}%` : '—'}
+            tooltip="Tus goles respecto al total de goles marcados por tu equipo esta temporada."
           />
           <StatTile
             label="Factor Clutch (75'+)"
             value={adv.clutch_factor_pct !== null ? `${adv.clutch_factor_pct.toFixed(0)}%` : '—'}
+            tooltip="Porcentaje de tus goles marcados en los últimos 15 minutos de partido."
           />
           <StatTile
             label="Disciplina (min/tarjeta)"
             value={adv.discipline_rating !== null ? adv.discipline_rating.toFixed(0) : '—'}
+            tooltip="Media de minutos jugados por cada tarjeta recibida (Amarilla o Roja)."
           />
           <StatTile
             label="Índice de Consistencia"
             value={adv.consistency_index !== null ? `${adv.consistency_index} 🔥` : '—'}
+            tooltip="Mayor racha de partidos consecutivos jugando como Titular."
           />
           <StatTile
             label="Impacto PPG"
             value={adv.ppg_impact !== null ? `${adv.ppg_impact > 0 ? '+' : ''}${adv.ppg_impact.toFixed(2)}` : '—'}
+            tooltip="Diferencia entre los puntos que saca el equipo cuando juegas vs cuando no juegas."
           />
           <StatTile
             label="Percentil Goleador"
             value={adv.scorer_percentile !== null ? `Top ${Math.max(1, 100 - adv.scorer_percentile).toFixed(0)}%` : '—'}
+            tooltip="Tu posición relativa respecto a todos los goleadores de la liga."
           />
         </div>
       </section>
@@ -75,30 +81,37 @@ function AdvancedInsights() {
           <StatTile
             label="Efectividad de Tiro"
             value={adv.shot_conversion_pct !== null ? `${adv.shot_conversion_pct.toFixed(1)}%` : '—'}
+            tooltip="Goles oficiales marcados divididos por el total de tiros registrados por el tracker."
           />
           <StatTile
             label="Km por Gol"
             value={adv.distance_per_goal_km !== null ? adv.distance_per_goal_km.toFixed(1) : '—'}
+            tooltip="Distancia total recorrida dividida por el número de goles marcados."
           />
           <StatTile
             label="Resistencia Fatiga"
             value={adv.fatigue_resistance_pct !== null ? `${adv.fatigue_resistance_pct.toFixed(0)}%` : '—'}
+            tooltip="Ratio de intensidad física en la 2ª parte vs la 1ª parte."
           />
           <StatTile
             label="Workrate Win %"
             value={adv.workrate_win_pct !== null ? `${adv.workrate_win_pct.toFixed(0)}%` : '—'}
+            tooltip="Porcentaje de victorias en partidos donde has corrido más que tu media habitual."
           />
           <StatTile
             label="Luka Modrić Score"
             value={adv.luka_modric_score !== null ? adv.luka_modric_score.toFixed(1) : '—'}
+            tooltip="Índice que premia la distribución y el esfuerzo físico, penalizando el juego individualista."
           />
           <StatTile
             label="Intensidad vs Rank"
             value={adv.intensity_vs_rank_ratio !== null ? `${(adv.intensity_vs_rank_ratio * 100).toFixed(0)}%` : '—'}
+            tooltip="Ratio de esfuerzo (HSR+) contra equipos del Top 5 vs el resto de la liga."
           />
           <StatTile
             label="Intensidad W/L"
             value={adv.workload_win_vs_loss_ratio !== null ? `${(adv.workload_win_vs_loss_ratio * 100).toFixed(0)}%` : '—'}
+            tooltip="Ratio de esfuerzo físico en victorias vs derrotas."
           />
         </div>
         

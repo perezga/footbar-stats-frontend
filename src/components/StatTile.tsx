@@ -2,6 +2,7 @@ interface Props {
   label: string;
   value: string;
   sublabel?: string;
+  tooltip?: string;
   /** Percent vs the player's recent average; undefined hides the delta. */
   delta?: number;
   /** True when lower is better (e.g. acceleration time): swaps the colors. */
@@ -29,9 +30,9 @@ function Delta({ delta, invert, title }: { delta: number; invert?: boolean; titl
   );
 }
 
-export function StatTile({ label, value, sublabel, delta, deltaInvert, deltaTitle }: Props) {
+export function StatTile({ label, value, sublabel, tooltip, delta, deltaInvert, deltaTitle }: Props) {
   return (
-    <div className="rounded-xl bg-brand-panel p-4 border border-slate-800">
+    <div title={tooltip} className="rounded-xl bg-brand-panel p-4 border border-slate-800">
       <div className="text-xs uppercase tracking-wider text-slate-400">{label}</div>
       <div className="text-2xl font-semibold text-slate-100 mt-1 flex items-baseline gap-2">
         {value}
