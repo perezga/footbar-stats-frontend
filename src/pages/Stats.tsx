@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { useRecords, useTrend } from '../api/hooks.js';
+import { useRecords, useTrend, useAdvancedMetrics } from '../api/hooks.js';
 import type { TrendPoint } from '../api/types.js';
 import { RecordsCard } from '../components/RecordsCard.js';
 import { TrendChart, type TrendSeries } from '../components/TrendChart.js';
+import { StatTile } from '../components/StatTile.js';
 
 const METRICS: { key: string; label: string; unit?: string; transform?: (v: number) => number }[] =
   [
@@ -21,6 +22,101 @@ const METRICS: { key: string; label: string; unit?: string; transform?: (v: numb
 
 const MATCH_COLOR = '#F7335D'; // partidos (brand)
 const TRAIN_COLOR = '#38bdf8'; // entrenamientos (sky)
+
+function AdvancedInsights() {
+  const { data: adv, isLoading } = useAdvancedMetrics();
+
+  if (isLoading) return <div className="text-slate-400 text-sm italic animate-pulse">Computing analytical insights…</div>;
+  if (!adv) return null;
+
+  return (
+    <div className="space-y-6">
+      {/* RFAF Official Performance */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+          Official Performance (RFAF)
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StatTile
+            label="Contribución Goleadora"
+            value={adv.goal_contribution_pct !== null ? `${adv.goal_contribution_pct.toFixed(1)}%` : '—'}
+          />
+          <StatTile
+            label="Factor Clutch (75'+)"
+            value={adv.clutch_factor_pct !== null ? `${adv.clutch_factor_pct.toFixed(0)}%` : '—'}
+          />
+          <StatTile
+            label="Disciplina (min/tarjeta)"
+            value={adv.discipline_rating !== null ? adv.discipline_rating.toFixed(0) : '—'}
+          />
+          <StatTile
+            label="Índice de Consistencia"
+            value={adv.consistency_index !== null ? `${adv.consistency_index} 🔥` : '—'}
+          />
+          <StatTile
+            label="Impacto PPG"
+            value={adv.ppg_impact !== null ? `${adv.ppg_impact > 0 ? '+' : ''}${adv.ppg_impact.toFixed(2)}` : '—'}
+          />
+          <StatTile
+            label="Percentil Goleador"
+            value={adv.scorer_percentile !== null ? `Top ${Math.max(1, 100 - adv.scorer_percentile).toFixed(0)}%` : '—'}
+          />
+        </div>
+      </section>
+
+      {/* Combined Pro Insights */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-brand"></span>
+          Pro Insights (Footbar + RFAF)
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          <StatTile
+            label="Efectividad de Tiro"
+            value={adv.shot_conversion_pct !== null ? `${adv.shot_conversion_pct.toFixed(1)}%` : '—'}
+          />
+          <StatTile
+            label="Km por Gol"
+            value={adv.distance_per_goal_km !== null ? adv.distance_per_goal_km.toFixed(1) : '—'}
+          />
+          <StatTile
+            label="Resistencia Fatiga"
+            value={adv.fatigue_resistance_pct !== null ? `${adv.fatigue_resistance_pct.toFixed(0)}%` : '—'}
+          />
+          <StatTile
+            label="Workrate Win %"
+            value={adv.workrate_win_pct !== null ? `${adv.workrate_win_pct.toFixed(0)}%` : '—'}
+          />
+          <StatTile
+            label="Luka Modrić Score"
+            value={adv.luka_modric_score !== null ? adv.luka_modric_score.toFixed(1) : '—'}
+          />
+          <StatTile
+            label="Intensidad vs Rank"
+            value={adv.intensity_vs_rank_ratio !== null ? `${(adv.intensity_vs_rank_ratio * 100).toFixed(0)}%` : '—'}
+          />
+          <StatTile
+            label="Intensidad W/L"
+            value={adv.workload_win_vs_loss_ratio !== null ? `${(adv.workload_win_vs_loss_ratio * 100).toFixed(0)}%` : '—'}
+          />
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div className="text-[10px] text-slate-500 space-y-1">
+            <p><strong>Impacto PPG:</strong> Diferencia de puntos por partido con vs sin el jugador.</p>
+            <p><strong>Resistencia Fatiga:</strong> Ratio de distancia recorrida en la 2ª parte vs 1ª parte.</p>
+          </div>
+          <div className="text-[10px] text-slate-500 space-y-1">
+            <p><strong>Luka Modrić Score:</strong> Valora pases y distancia, penaliza perfiles goleadores egoístas.</p>
+            <p><strong>Intensidad vs Rank:</strong> Esfuerzo contra el Top 5 vs el resto. &gt;100% significa que te creces ante los grandes.</p>
+            <p><strong>Workrate Win %:</strong> Porcentaje de victorias cuando corres más de tu media habitual.</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
 
 export function Stats() {
   const [metric, setMetric] = useState(METRICS[0]?.key);
@@ -44,6 +140,8 @@ export function Stats() {
 
   return (
     <div className="space-y-6">
+      <AdvancedInsights />
+
       <div className="rounded-xl bg-brand-panel border border-slate-800 p-4">
         <div className="flex flex-wrap items-center gap-3">
           <label htmlFor="metric" className="text-sm text-slate-400">

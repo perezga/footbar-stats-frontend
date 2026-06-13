@@ -122,7 +122,7 @@ export function Profile() {
 
         <PlayerCard
           profile={{
-            id: 0,
+            user_id: 0,
             nickname: player?.name || 'Player',
             first_name: player?.name || '',
             last_name: '',
@@ -134,8 +134,8 @@ export function Profile() {
             d_o_b: '',
             height: 0,
             weight: 0,
-            profile_pic: null,
-            country_flag: null,
+            profile_pic: '',
+            country_flag: '',
           }}
           stats={rfaf.data?.results}
           scorer={scorers.data?.results.find((s) => s.own)}

@@ -307,3 +307,22 @@ export interface SeasonsResponse extends RfafResponse<Season> {
   /** Season id the backend defaults to when none is selected. */
   current: string;
 }
+
+export interface AdvancedMetrics {
+  // RFAF-only
+  goal_contribution_pct: number | null;
+  clutch_factor_pct: number | null;
+  discipline_rating: number | null;
+  consistency_index: number | null;
+  ppg_impact: number | null;
+  scorer_percentile: number | null;
+  // Combined
+  shot_conversion_pct: number | null;
+  distance_per_goal_km: number | null;
+  workload_win_vs_loss_ratio: number | null;
+  possession_win_ratio: number | null;
+  fatigue_resistance_pct: number | null;
+  workrate_win_pct: number | null;
+  luka_modric_score: number | null;
+  intensity_vs_rank_ratio: number | null;
+}

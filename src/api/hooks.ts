@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client.js';
 import type {
+  AdvancedMetrics,
   AveragesResponse,
   Fixture,
   LevelResponse,
@@ -137,6 +138,14 @@ export function useAverages(matchType: MatchType, excludeId: number, enabled: bo
     queryKey: ['averages', matchType, excludeId, playerId],
     queryFn: () => api<AveragesResponse>(`/api/stats/averages?${params.toString()}`),
     enabled,
+  });
+}
+
+export function useAdvancedMetrics() {
+  const playerId = localStorage.getItem('activePlayerId');
+  return useQuery({
+    queryKey: ['advanced-metrics', playerId],
+    queryFn: () => api<AdvancedMetrics>('/api/stats/advanced'),
   });
 }
 
