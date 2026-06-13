@@ -79,7 +79,8 @@ export function PlayerCard({ profile, stats, scorer, records, matches }: Props) 
   // Achievements from the player's per-match goal events.
   const goalsByMatch = matches
     .filter((m) => m.fixture)
-    .map((m) => m.fixture!.events.filter((e) => e.kind === 'goal').length);
+    .map((m) => m.fixture?.events.filter((e) => e.kind === 'goal').length)
+    .filter((n): n is number => n !== undefined);
   const hatTricks = goalsByMatch.filter((n) => n >= 3).length;
   const bestMatch = goalsByMatch.length > 0 ? Math.max(...goalsByMatch) : 0;
 

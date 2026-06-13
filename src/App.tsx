@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuthStatus } from './api/hooks.js';
+import { usePlayerContext } from './api/PlayerContext.js';
 import { Layout } from './components/Layout.js';
 import { Login } from './pages/Login.js';
 
@@ -13,12 +14,18 @@ const SessionDetail = lazy(() =>
 );
 const Stats = lazy(() => import('./pages/Stats.js').then((m) => ({ default: m.Stats })));
 const League = lazy(() => import('./pages/League.js').then((m) => ({ default: m.League })));
+const PlayerSettings = lazy(() =>
+  import('./pages/PlayerSettings.js').then((m) => ({ default: m.PlayerSettings })),
+);
 
 function Guard({ children }: { children: React.ReactNode }) {
-  const { data, isLoading } = useAuthStatus();
+  const { activePlayerId } = usePlayerContext();
   const loc = useLocation();
-  if (isLoading) return <div className="p-8 text-slate-400">Loading…</div>;
-  if (!data?.authenticated) return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
+
+  if (!activePlayerId) {
+    return <Navigate to="/login" replace state={{ from: loc.pathname }} />;
+  }
+
   return <>{children}</>;
 }
 
@@ -40,6 +47,7 @@ export default function App() {
           <Route path="sessions/:id" element={<SessionDetail />} />
           <Route path="stats" element={<Stats />} />
           <Route path="league" element={<League />} />
+          <Route path="settings" element={<PlayerSettings />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

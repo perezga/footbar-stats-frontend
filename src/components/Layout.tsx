@@ -1,20 +1,27 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useLogout, useProfile } from '../api/hooks.js';
+import { useLogout, usePlayers, useProfile } from '../api/hooks.js';
+import { usePlayerContext } from '../api/PlayerContext.js';
 
 const tabs = [
   { to: '/', label: 'Profile' },
   { to: '/sessions', label: 'Sessions' },
   { to: '/stats', label: 'Stats' },
   { to: '/league', label: 'League' },
+  { to: '/settings', label: 'Settings' },
 ];
 
 export function Layout() {
+  const { activePlayerId, setActivePlayerId } = usePlayerContext();
+  const { data: players } = usePlayers();
   const profile = useProfile(true);
   const logout = useLogout();
   const nav = useNavigate();
 
+  const activePlayer = players?.find((p) => p.id === activePlayerId);
+
   const onLogout = async () => {
-    await logout.mutateAsync();
+    await logout.mutateAsync(activePlayerId ?? undefined);
+    setActivePlayerId(null);
     nav('/login', { replace: true });
   };
 
@@ -29,12 +36,15 @@ export function Layout() {
               className="h-9 w-9 rounded-full border border-slate-700"
             />
           )}
-          <div className="text-sm text-slate-300">
-            {profile.data
-              ? `${profile.data.first_name} ${profile.data.last_name}`.trim() ||
-                profile.data.nickname
-              : 'Footbar Stats'}
+          <div className="flex flex-col">
+            <div className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+              Player
+            </div>
+            <div className="text-sm text-slate-200 font-semibold">
+              {activePlayer?.name ?? 'Loading...'}
+            </div>
           </div>
+
           <nav className="ml-6 flex gap-1">
             {tabs.map((t) => (
               <NavLink
@@ -51,13 +61,23 @@ export function Layout() {
               </NavLink>
             ))}
           </nav>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="ml-auto text-sm text-slate-400 hover:text-slate-200"
-          >
-            Log out
-          </button>
+
+          <div className="ml-auto flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => nav('/login')}
+              className="text-xs text-slate-400 hover:text-slate-200 underline underline-offset-4"
+            >
+              Switch Player
+            </button>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="text-sm text-slate-400 hover:text-red-400 transition-colors"
+            >
+              Log out
+            </button>
+          </div>
         </div>
       </header>
       <main className="max-w-5xl mx-auto px-4 py-6">

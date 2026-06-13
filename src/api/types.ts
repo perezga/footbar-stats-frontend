@@ -295,6 +295,14 @@ export interface Season {
   name: string;
 }
 
+export interface RfafSearchResult {
+  id: string;
+  name: string;
+  team: string;
+  category: string;
+  image: string | null;
+}
+
 export interface SeasonsResponse extends RfafResponse<Season> {
   /** Season id the backend defaults to when none is selected. */
   current: string;

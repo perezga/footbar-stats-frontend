@@ -145,12 +145,12 @@ export function formatKickoff(date: string | null, time: string | null): string 
 }
 
 export function mToKm(m: number): string {
-  if (m >= 1000) return (m / 1000).toFixed(2) + ' km';
-  return Math.round(m) + ' m';
+  if (m >= 1000) return `${(m / 1000).toFixed(2)} km`;
+  return `${Math.round(m)} m`;
 }
 
 export function msToKmh(ms: number): string {
-  return (ms * 3.6).toFixed(1) + ' km/h';
+  return `${(ms * 3.6).toFixed(1)} km/h`;
 }
 
 export function secToClock(s: number): string {
@@ -166,7 +166,7 @@ export function secToClock(s: number): string {
 }
 
 export function pct(n: number): string {
-  return (n <= 1 ? n * 100 : n).toFixed(0) + '%';
+  return `${(n <= 1 ? n * 100 : n).toFixed(0)}%`;
 }
 
 export const MATCH_TYPE_LABEL: Record<MatchType, string> = {

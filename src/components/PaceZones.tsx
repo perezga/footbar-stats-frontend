@@ -65,7 +65,7 @@ export function PaceZones({ bins, windowStart, windowEnd }: Props) {
           ))}
           {showMarkers && (
             <ReferenceLine
-              x={data[firstIdx]!.bin}
+              x={data[firstIdx]?.bin}
               stroke="#94a3b8"
               strokeDasharray="3 3"
               label={{ value: 'Inicio', position: 'top', fill: '#94a3b8', fontSize: 11 }}
@@ -73,7 +73,7 @@ export function PaceZones({ bins, windowStart, windowEnd }: Props) {
           )}
           {showMarkers && lastIdx !== firstIdx && (
             <ReferenceLine
-              x={data[lastIdx]!.bin}
+              x={data[lastIdx]?.bin}
               stroke="#94a3b8"
               strokeDasharray="3 3"
               label={{ value: 'Fin', position: 'top', fill: '#94a3b8', fontSize: 11 }}

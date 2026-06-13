@@ -8,7 +8,13 @@ export class ApiError extends Error {
 }
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const res = await fetch(path, { credentials: 'include', ...init });
+  const playerId = localStorage.getItem('activePlayerId');
+  const headers = new Headers(init.headers);
+  if (playerId) {
+    headers.set('x-player-id', playerId);
+  }
+
+  const res = await fetch(path, { ...init, headers, credentials: 'include' });
   if (!res.ok) {
     let msg = res.statusText;
     try {

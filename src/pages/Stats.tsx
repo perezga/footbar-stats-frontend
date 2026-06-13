@@ -23,11 +23,12 @@ const MATCH_COLOR = '#F7335D'; // partidos (brand)
 const TRAIN_COLOR = '#38bdf8'; // entrenamientos (sky)
 
 export function Stats() {
-  const [metric, setMetric] = useState(METRICS[0]!.key);
+  const [metric, setMetric] = useState(METRICS[0]?.key);
   const cfg = METRICS.find((m) => m.key === metric)!;
 
-  const matchTrend = useTrend(metric, '11', true);
-  const trainTrend = useTrend(metric, 'tr', true);
+  const matchTrend = useTrend(metric ?? '', '11', !!metric);
+  const trainTrend = useTrend(metric ?? '', 'tr', !!metric);
+
   const matchRecords = useRecords('11', true);
   const trainRecords = useRecords('tr', true);
 

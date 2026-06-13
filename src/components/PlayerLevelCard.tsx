@@ -100,8 +100,7 @@ export function PlayerLevelCard({ data }: { data: LevelResponse }) {
             ))}
           </ul>
           <div className="mt-3 text-xs opacity-70">
-            Partidos evaluados:{' '}
-            {data.matches.map((m) => `${m.title} (${formatDate(m.start_date)})`).join(' · ')}
+            Calculado con todos los partidos de la temporada actual.
           </div>
         </div>
       )}

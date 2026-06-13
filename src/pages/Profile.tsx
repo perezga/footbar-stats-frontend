@@ -5,7 +5,9 @@ import {
   useRecords,
   useScorers,
   useSessions,
+  usePlayers,
 } from '../api/hooks.js';
+import { usePlayerContext } from '../api/PlayerContext.js';
 import type { PlayerStats } from '../api/types.js';
 import { ErrorAlert } from '../components/ErrorAlert.js';
 import { MatchHero } from '../components/MatchHero.js';
@@ -59,23 +61,97 @@ function SeasonStats({ stats }: { stats: PlayerStats }) {
     </section>
   );
 }
-
 export function Profile() {
+  const { activePlayerId } = usePlayerContext();
+  const { data: players } = usePlayers();
   const q = useProfile(true);
   const rfaf = usePlayerStats(true);
   const records = useRecords('11', true);
   const scorers = useScorers(true, '');
   const matches = useSessions({ matchType: '11', includeFixtures: true, limit: 200 }, true);
   const level = useLevel(true);
+
+  const player = players?.find((p) => p.id === activePlayerId);
+
+  // Treat 404 as "unlinked" instead of a hard error.
+  const is404 = (q.error as any)?.status === 404;
+
   if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
-  if (q.error) return <ErrorAlert error={q.error} onRetry={() => q.refetch()} />;
-  if (!q.data) return null;
+  if (q.error && !is404) return <ErrorAlert error={q.error} onRetry={() => q.refetch()} />;
+
+  // Handle unlinked player or missing profile
   const p = q.data;
+  if (!p || is404) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <div className="h-20 w-20 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-2xl font-bold">
+            {player?.name?.[0] || '?'}
+          </div>
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-100">{player?.name || 'Player'}</h1>
+            <div className="text-slate-400">RFAF Profile Linked</div>
+          </div>
+        </div>
+
+        {!player?.footbar_user_id && (
+          <div className="bg-brand/10 border border-brand/20 rounded-xl p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h3 className="text-brand font-semibold">Connect Footbar</h3>
+              <p className="text-sm text-slate-400">Link your tracker to see your heatmap, sprints, and game stats here.</p>
+            </div>
+            <a
+              href={`/auth/login?playerId=${activePlayerId}`}
+              className="bg-brand hover:bg-brand/90 text-white font-bold py-2 px-6 rounded-md transition-colors whitespace-nowrap"
+            >
+              Connect Now
+            </a>
+          </div>
+        )}
+
+        {level.data && <PlayerLevelCard data={level.data} />}
+
+        {rfaf.data && <SeasonStats stats={rfaf.data.results} />}
+
+        {matches.data && (
+          <div className="space-y-3">
+            <h2 className="text-lg font-semibold text-slate-100">League Matches</h2>
+            <MatchHero matches={matches.data.results} />
+          </div>
+        )}
+
+        <PlayerCard
+          profile={{
+            id: 0,
+            nickname: player?.name || 'Player',
+            first_name: player?.name || '',
+            last_name: '',
+            age_category: '',
+            fav_position: '',
+            fav_foot: 'n',
+            strength: 'un',
+            gender: 'm',
+            d_o_b: '',
+            height: 0,
+            weight: 0,
+            profile_pic: null,
+            country_flag: null,
+          }}
+          stats={rfaf.data?.results}
+          scorer={scorers.data?.results.find((s) => s.own)}
+          records={records.data?.records ?? []}
+          matches={matches.data?.results ?? []}
+        />
+      </div>
+    );
+  }
+
   const name = `${p.first_name} ${p.last_name}`.trim() || p.nickname;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
+...
         {p.profile_pic && (
           <img
             src={p.profile_pic}

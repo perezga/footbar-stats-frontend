@@ -9,6 +9,7 @@ import type {
   Profile,
   RecordEntry,
   RfafResponse,
+  RfafSearchResult,
   Scorer,
   SeasonsResponse,
   SessionDetail,
@@ -74,8 +75,9 @@ export function useRefreshSessions() {
 }
 
 export function useSession(id: number, enabled: boolean) {
+  const playerId = localStorage.getItem('activePlayerId');
   return useQuery({
-    queryKey: ['session', id],
+    queryKey: ['session', id, playerId],
     queryFn: () => api<SessionDetail>(`/api/sessions/${id}`),
     enabled,
   });
@@ -97,27 +99,30 @@ export function useRefreshSession(id: number) {
 
 /** Player level derived from the last matches (see the profile banner). */
 export function useLevel(enabled: boolean) {
+  const playerId = localStorage.getItem('activePlayerId');
   return useQuery({
-    queryKey: ['level'],
+    queryKey: ['level', playerId],
     queryFn: () => api<LevelResponse>('/api/stats/level'),
     enabled,
   });
 }
 
 export function useRecords(matchType: MatchType | undefined, enabled: boolean) {
+  const playerId = localStorage.getItem('activePlayerId');
   const qs = matchType ? `?match_type=${matchType}` : '';
   return useQuery({
-    queryKey: ['records', matchType ?? 'all'],
+    queryKey: ['records', matchType ?? 'all', playerId],
     queryFn: () => api<{ records: RecordEntry[] }>(`/api/stats/records${qs}`),
     enabled,
   });
 }
 
 export function useTrend(metric: string, matchType: MatchType | undefined, enabled: boolean) {
+  const playerId = localStorage.getItem('activePlayerId');
   const params = new URLSearchParams({ metric });
   if (matchType) params.set('match_type', matchType);
   return useQuery({
-    queryKey: ['trends', metric, matchType ?? 'all'],
+    queryKey: ['trends', metric, matchType ?? 'all', playerId],
     queryFn: () =>
       api<{ metric: string; points: TrendPoint[] }>(`/api/stats/trends?${params.toString()}`),
     enabled,
@@ -126,9 +131,10 @@ export function useTrend(metric: string, matchType: MatchType | undefined, enabl
 
 /** Recent-sessions averages to compare a session against (excludes itself). */
 export function useAverages(matchType: MatchType, excludeId: number, enabled: boolean) {
+  const playerId = localStorage.getItem('activePlayerId');
   const params = new URLSearchParams({ match_type: matchType, exclude: String(excludeId) });
   return useQuery({
-    queryKey: ['averages', matchType, excludeId],
+    queryKey: ['averages', matchType, excludeId, playerId],
     queryFn: () => api<AveragesResponse>(`/api/stats/averages?${params.toString()}`),
     enabled,
   });
@@ -185,10 +191,81 @@ export function useRefreshRfaf() {
   });
 }
 
+export interface Player {
+  id: number;
+  name: string;
+  footbar_user_id: number | null;
+  rfaf_player_id: string | null;
+  rfaf_season: string | null;
+  rfaf_team_id: number | null;
+  rfaf_group_id: string | null;
+  rfaf_competition_id: string | null;
+  rfaf_own_player: string | null;
+  rfaf_own_team: string | null;
+  created_at: number;
+}
+
+export function usePlayers() {
+  return useQuery({
+    queryKey: ['players'],
+    queryFn: () => api<Player[]>('/api/players'),
+  });
+}
+
+export function useRfafSearch(query: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['rfaf-search', query],
+    queryFn: () => api<RfafSearchResult[]>(`/api/rfaf/search?q=${encodeURIComponent(query)}`),
+    enabled: enabled && query.length >= 3,
+  });
+}
+
+export function useCreatePlayer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name: string; rfaf_player_id?: string; rfaf_own_player?: string }) =>
+      api<Player>('/api/players', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['players'] }),
+  });
+}
+
+export function useUpdatePlayer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: Partial<Player> & { id: number }) =>
+      api<Player>(`/api/players/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ['players'] });
+      qc.setQueryData(['player', data.id], data);
+    },
+  });
+}
+
+export function useDeletePlayer() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api<{ success: true }>(`/api/players/${id}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['players'] }),
+  });
+}
+
 export function useLogout() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => api<{ ok: true }>('/auth/logout', { method: 'POST' }),
+    mutationFn: (playerId?: number) =>
+      api<{ ok: true }>('/auth/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerId }),
+      }),
     onSuccess: () => qc.clear(),
   });
 }

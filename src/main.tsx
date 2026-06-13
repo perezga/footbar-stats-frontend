@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.js';
 import './index.css';
+import { PlayerProvider } from './api/PlayerContext.js';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,9 +19,11 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <PlayerProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </PlayerProvider>
     </QueryClientProvider>
   </React.StrictMode>,
 );
