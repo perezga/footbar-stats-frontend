@@ -275,7 +275,7 @@ export interface PlayerStats {
   age: number | null;
   category: string;
   season_id: string;
-  /** Season label (e.g. '2025-2026'). */
+  /** Season label (e.g. '2026-2027'). */
   season: string;
   minutes_played: number | null;
   minutes_per_game: number | null;
@@ -289,7 +289,7 @@ export interface PlayerStatsResponse {
   fetched_at: number;
 }
 
-/** One selectable season ('21' = 2025-2026). */
+/** One selectable season ('22' = 2026-2027). */
 export interface Season {
   id: string;
   name: string;
