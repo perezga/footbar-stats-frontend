@@ -17,8 +17,29 @@ import type {
   SessionDetail,
   SessionListResponse,
   Standing,
+  TeamDetails,
   TrendPoint,
 } from './types.js';
+
+export type {
+  AdvancedMetrics,
+  AveragesResponse,
+  Fixture,
+  LevelResponse,
+  MatchType,
+  PlayerStatsResponse,
+  Profile,
+  RecordEntry,
+  RfafResponse,
+  RfafSearchResult,
+  Scorer,
+  SeasonsResponse,
+  SessionDetail,
+  SessionListResponse,
+  Standing,
+  TeamDetails,
+  TrendPoint,
+};
 
 export interface AuthStatus {
   authenticated: boolean;
@@ -191,6 +212,18 @@ export function useFixtures(enabled: boolean, season: string) {
   return useQuery({
     queryKey: ['rfaf', 'fixtures', season],
     queryFn: () => api<RfafResponse<Fixture>>(`/api/rfaf/fixtures${seasonQs(season)}`),
+    enabled,
+  });
+}
+
+export function useTeamDetails(enabled: boolean, season: string, playerId?: number | null) {
+  const resolvedId = playerId ?? localStorage.getItem('activePlayerId');
+  return useQuery({
+    queryKey: ['rfaf', 'team', season, resolvedId],
+    queryFn: () =>
+      api<{ results: TeamDetails; fetched_at: number }>(`/api/rfaf/team${seasonQs(season)}`, {
+        playerId,
+      }),
     enabled,
   });
 }

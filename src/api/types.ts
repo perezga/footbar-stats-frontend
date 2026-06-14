@@ -254,6 +254,22 @@ export interface Fixture {
   result: RfafForm | null;
 }
 
+export interface TeamRosterPlayer {
+  id: string;
+  name: string;
+  image: string | null;
+  played: number;
+  started: number;
+  goals: number;
+  own?: boolean;
+}
+
+export interface TeamDetails {
+  name: string;
+  group: string;
+  roster: TeamRosterPlayer[];
+}
+
 export interface RfafResponse<T> {
   results: T[];
   fetched_at: number;

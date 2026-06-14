@@ -8,16 +8,31 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useFixtures, useRefreshRfaf, useScorers, useSeasons, useStandings } from '../api/hooks.js';
-import type { Fixture, RfafForm, Scorer, Standing } from '../api/types.js';
+import {
+  useFixtures,
+  useRefreshRfaf,
+  useScorers,
+  useSeasons,
+  useStandings,
+  useTeamDetails,
+} from '../api/hooks.js';
+import type {
+  Fixture,
+  RfafForm,
+  Scorer,
+  Standing,
+  TeamDetails,
+  TeamRosterPlayer,
+} from '../api/types.js';
 import { ErrorAlert } from '../components/ErrorAlert.js';
 import { formatDate, RESULT_STYLE } from '../lib/units.js';
 
-type Tab = 'standings' | 'fixtures' | 'scorers';
+type Tab = 'standings' | 'fixtures' | 'scorers' | 'team';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'standings', label: 'Standings' },
   { id: 'fixtures', label: 'Fixtures' },
   { id: 'scorers', label: 'Top scorers' },
+  { id: 'team', label: 'Team' },
 ];
 
 const FORM_STYLE = RESULT_STYLE;
@@ -228,6 +243,62 @@ function ScorersTable({ rows }: { rows: Scorer[] }) {
   );
 }
 
+function TeamRosterTable({ rows }: { rows: TeamRosterPlayer[] }) {
+  return (
+    <div className="overflow-x-auto rounded-xl bg-brand-panel border border-slate-800">
+      <table className="w-full text-sm">
+        <thead className="text-slate-400 border-b border-slate-800">
+          <tr className="text-left">
+            <th className="px-3 py-2">Player</th>
+            <th className="px-2 py-2 text-center">PJ</th>
+            <th className="px-2 py-2 text-center">Titular</th>
+            <th className="px-2 py-2 text-center">Goals</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-800">
+          {rows
+            .sort((a, b) => b.goals - a.goals || b.played - a.played)
+            .map((p) => (
+              <tr key={p.id} className={ownRow(p.own)}>
+                <td className="px-3 py-2 flex items-center gap-3">
+                  {p.image ? (
+                    <img src={p.image} alt="" className="h-6 w-6 rounded-full bg-slate-800" />
+                  ) : (
+                    <div className="h-6 w-6 rounded-full bg-slate-800" />
+                  )}
+                  {p.name}
+                </td>
+                <td className="px-2 py-2 text-center text-slate-400">{p.played}</td>
+                <td className="px-2 py-2 text-center text-slate-400">{p.started}</td>
+                <td className="px-2 py-2 text-center font-semibold text-brand-light">{p.goals}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function TeamSection({ data }: { data: TeamDetails }) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl bg-brand-panel border border-slate-800 p-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Team</div>
+            <div className="text-lg font-semibold text-slate-100">{data.name}</div>
+          </div>
+          <div>
+            <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Group</div>
+            <div className="text-sm text-slate-300">{data.group}</div>
+          </div>
+        </div>
+      </div>
+      <TeamRosterTable rows={data.roster} />
+    </div>
+  );
+}
+
 export function League() {
   const [tab, setTab] = useState<Tab>('standings');
   // '' = the backend's default (current) season.
@@ -236,6 +307,7 @@ export function League() {
   const standings = useStandings(true, season);
   const fixtures = useFixtures(tab === 'fixtures', season);
   const scorers = useScorers(tab === 'scorers', season);
+  const team = useTeamDetails(tab === 'team', season);
   const refresh = useRefreshRfaf();
 
   const ownTeam = useMemo(
@@ -243,7 +315,14 @@ export function League() {
     [standings.data],
   );
 
-  const active = tab === 'standings' ? standings : tab === 'fixtures' ? fixtures : scorers;
+  const active =
+    tab === 'standings'
+      ? standings
+      : tab === 'fixtures'
+        ? fixtures
+        : tab === 'scorers'
+          ? scorers
+          : team;
   const lastSync = active.data?.fetched_at ? new Date(active.data.fetched_at) : null;
 
   return (
@@ -293,9 +372,12 @@ export function League() {
 
       {active.isLoading && <div className="text-slate-400">Loading…</div>}
       {active.error && <ErrorAlert error={active.error} onRetry={() => active.refetch()} />}
-      {active.data && active.data.results.length === 0 && (
-        <div className="text-slate-400">No data for this season.</div>
-      )}
+      {active.data &&
+        (Array.isArray(active.data.results)
+          ? active.data.results.length === 0
+          : !active.data.results.roster.length) && (
+          <div className="text-slate-400">No data for this season.</div>
+        )}
 
       {tab === 'standings' && standings.data && standings.data.results.length > 0 && (
         <StandingsTable rows={standings.data.results} />
@@ -308,6 +390,9 @@ export function League() {
       )}
       {tab === 'scorers' && scorers.data && scorers.data.results.length > 0 && (
         <ScorersTable rows={scorers.data.results} />
+      )}
+      {tab === 'team' && team.data && team.data.results.roster.length > 0 && (
+        <TeamSection data={team.data.results} />
       )}
     </div>
   );

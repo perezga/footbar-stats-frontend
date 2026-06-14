@@ -15,7 +15,7 @@ export async function api<T>(
     init.playerId !== undefined ? init.playerId : localStorage.getItem('activePlayerId');
   const headers = new Headers(init.headers);
   if (playerId) {
-    headers.set('x-player-id', playerId);
+    headers.set('x-player-id', String(playerId));
   }
 
   const res = await fetch(path, { ...init, headers, credentials: 'include' });
