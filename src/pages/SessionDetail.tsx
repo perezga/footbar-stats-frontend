@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useAverages, useRefreshSession, useSession } from '../api/hooks.js';
 import { ErrorAlert } from '../components/ErrorAlert.js';
 import { MatchResult } from '../components/MatchResult.js';
+import { MatchComparison } from '../components/MatchComparison.js';
 import { PaceZones } from '../components/PaceZones.js';
 import { SessionMap } from '../components/SessionMap.js';
 import { StatTile } from '../components/StatTile.js';
@@ -32,6 +33,9 @@ export function SessionDetail() {
   if (q.error) return <ErrorAlert error={q.error} onRetry={() => q.refetch()} />;
   if (!q.data) return null;
   const s = q.data;
+
+  const matchDate = s.fixture?.date || s.start_date.slice(0, 10);
+
   // Percent vs the recent-sessions mean; undefined (no delta shown) when the
   // metric is missing on either side or the mean is ~0.
   const delta = (key: string, v: number | null | undefined): number | undefined => {
@@ -84,70 +88,100 @@ export function SessionDetail() {
 
       {s.fixture && <MatchResult fixture={s.fixture} />}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatTile
-          label="Distance"
-          value={mToKm(s.distance)}
-          delta={delta('distance', s.distance)}
-          deltaTitle={deltaTitle}
-        />
-        <StatTile
-          label="Playing time"
-          value={secToClock(s.playing_time)}
-          delta={delta('playing_time', s.playing_time)}
-          deltaTitle={deltaTitle}
-        />
-        {s.distance_5min && s.distance_5min.length > 0 && (
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-brand"></span>
+          Official Match Data (RFAF)
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatTile
-            label="Time on pitch (est.)"
-            value={secToClock(playedMinutesFromBins(s.distance_5min, win?.start, win?.end) * 60)}
-            sublabel="from active pace bins"
+            label="Match Goals"
+            value={String(s.fixture?.events.filter((e) => e.kind === 'goal').length ?? 0)}
+            tooltip="Goles anotados en este partido según el acta oficial."
           />
-        )}
-        <StatTile
-          label="Top sprint"
-          value={msToKmh(s.sprint_speed)}
-          delta={delta('sprint_speed', s.sprint_speed)}
-          deltaTitle={deltaTitle}
-        />
-        <StatTile
-          label="Top shot"
-          value={msToKmh(s.shot_speed)}
-          delta={delta('shot_speed', s.shot_speed)}
-          deltaTitle={deltaTitle}
-        />
-        <StatTile
-          label="Sprints"
-          value={String(s.sprint_count)}
-          sublabel={`avg ${msToKmh(s.avg_sprint_speed)}`}
-          delta={delta('sprint_count', s.sprint_count)}
-          deltaTitle={deltaTitle}
-        />
-        <StatTile
-          label="Shots"
-          value={String(s.shot_count)}
-          sublabel={`avg ${msToKmh(s.avg_shot_speed)}`}
-          delta={delta('shot_count', s.shot_count)}
-          deltaTitle={deltaTitle}
-        />
-        <StatTile
-          label="Passes"
-          value={String(s.pass_count)}
-          delta={delta('pass_count', s.pass_count)}
-          deltaTitle={deltaTitle}
-        />
-        <StatTile
-          label="Activity"
-          value={pct(s.activity)}
-          delta={delta('activity', s.activity)}
-          deltaTitle={deltaTitle}
-        />
+          <StatTile
+            label="Match Cards"
+            value={String(s.fixture?.events.filter((e) => e.kind.includes('yellow') || e.kind === 'red').length ?? 0)}
+            tooltip="Tarjetas recibidas en este partido según el acta oficial."
+          />
+          <StatTile
+            label="Started (Titular)"
+            value={s.fixture?.started ? 'Yes' : 'No'}
+            tooltip="Indica si saliste en el once inicial del partido."
+          />
+          {s.distance_5min && s.distance_5min.length > 0 && (
+            <StatTile
+              label="Minutes Played"
+              value={`${playedMinutesFromBins(s.distance_5min, win?.start, win?.end)} min`}
+              tooltip="Tiempo total disputado en el terreno de juego (estimado por actividad)."
+            />
+          )}
+        </div>
       </div>
 
       <div className="space-y-3">
         <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-brand"></span>
-          Match Insights (Pro)
+          Physical Performance (Footbar)
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatTile
+            label="Distance"
+            value={mToKm(s.distance)}
+            delta={delta('distance', s.distance)}
+            deltaTitle={deltaTitle}
+          />
+          <StatTile
+            label="Top sprint"
+            value={msToKmh(s.sprint_speed)}
+            delta={delta('sprint_speed', s.sprint_speed)}
+            deltaTitle={deltaTitle}
+          />
+          <StatTile
+            label="Top shot"
+            value={msToKmh(s.shot_speed)}
+            delta={delta('shot_speed', s.shot_speed)}
+            deltaTitle={deltaTitle}
+          />
+          <StatTile
+            label="Sprints"
+            value={String(s.sprint_count)}
+            sublabel={`avg ${msToKmh(s.avg_sprint_speed)}`}
+            delta={delta('sprint_count', s.sprint_count)}
+            deltaTitle={deltaTitle}
+          />
+          <StatTile
+            label="Shots"
+            value={String(s.shot_count)}
+            sublabel={`avg ${msToKmh(s.avg_shot_speed)}`}
+            delta={delta('shot_count', s.shot_count)}
+            deltaTitle={deltaTitle}
+          />
+          <StatTile
+            label="Passes"
+            value={String(s.pass_count)}
+            delta={delta('pass_count', s.pass_count)}
+            deltaTitle={deltaTitle}
+          />
+          <StatTile
+            label="Activity"
+            value={pct(s.activity)}
+            delta={delta('activity', s.activity)}
+            deltaTitle={deltaTitle}
+          />
+          <StatTile
+            label="High-speed running"
+            value={mToKm(s.hsr_plus)}
+            delta={delta('hsr_plus', s.hsr_plus)}
+            deltaTitle={deltaTitle}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-brand"></span>
+          Advanced Match Insights
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatTile
@@ -191,12 +225,6 @@ export function SessionDetail() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatTile
-          label="High-speed running"
-          value={mToKm(s.hsr_plus)}
-          delta={delta('hsr_plus', s.hsr_plus)}
-          deltaTitle={deltaTitle}
-        />
-        <StatTile
           label="Time with ball"
           value={secToClock(s.time_with_ball)}
           delta={delta('time_with_ball', s.time_with_ball)}
@@ -239,6 +267,8 @@ export function SessionDetail() {
       {s.distance_5min && s.distance_5min.length > 0 && (
         <PaceZones bins={s.distance_5min} windowStart={win?.start} windowEnd={win?.end} />
       )}
+
+      <MatchComparison sessionA={s} date={matchDate} />
 
       {s.location?.coordinates && <SessionMap location={s.location} />}
     </div>

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from './client.js';
+import { usePlayerContext } from './PlayerContext.js';
 import type {
   AdvancedMetrics,
   AveragesResponse,
@@ -84,11 +85,11 @@ export function useRefreshRfaf() {
   });
 }
 
-export function useSession(id: number | string, enabled: boolean) {
-  const playerId = localStorage.getItem('activePlayerId');
+export function useSession(id: number | string, enabled: boolean, playerId?: number | null) {
+  const resolvedId = playerId ?? localStorage.getItem('activePlayerId');
   return useQuery({
-    queryKey: ['session', id, playerId],
-    queryFn: () => api<SessionDetail>(`/api/sessions/${id}`),
+    queryKey: ['session', id, resolvedId],
+    queryFn: () => api<SessionDetail>(`/api/sessions/${id}`, { playerId }),
     enabled,
   });
 }
@@ -231,6 +232,19 @@ export function usePlayers() {
     queryKey: ['players'],
     queryFn: () => api<Player[]>('/api/players'),
   });
+}
+
+/** All players belonging to the same team as the current active player. */
+export function useTeammates() {
+  const { activePlayerId } = usePlayerContext();
+  const { data: allPlayers } = usePlayers();
+
+  if (!allPlayers || !activePlayerId) return [];
+
+  const me = allPlayers.find((p) => p.id === activePlayerId);
+  if (!me?.rfaf_own_team) return [];
+
+  return allPlayers.filter((p) => p.id !== me.id && p.rfaf_own_team === me.rfaf_own_team);
 }
 
 export function useCreatePlayer() {
