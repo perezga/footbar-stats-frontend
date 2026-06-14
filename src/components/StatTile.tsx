@@ -32,11 +32,28 @@ function Delta({ delta, invert, title }: { delta: number; invert?: boolean; titl
 
 export function StatTile({ label, value, sublabel, tooltip, delta, deltaInvert, deltaTitle }: Props) {
   return (
-    <div title={tooltip} className="rounded-xl bg-brand-panel p-4 border border-slate-800">
-      <div className="text-xs uppercase tracking-wider text-slate-400">{label}</div>
-      <div className="text-2xl font-semibold text-slate-100 mt-1 flex items-baseline gap-2">
-        {value}
-        {delta !== undefined && <Delta delta={delta} invert={deltaInvert} title={deltaTitle} />}
+    <div className="rounded-xl bg-brand-panel p-4 border border-slate-800 flex flex-col justify-between">
+      <div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs uppercase tracking-wider text-slate-400">{label}</span>
+          {tooltip && (
+            <button
+              type="button"
+              title={tooltip}
+              className="text-slate-500 hover:text-slate-300 transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                alert(tooltip);
+              }}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </button>
+          )}
+        </div>
+        <div className="text-2xl font-semibold text-slate-100 mt-1 flex items-baseline gap-2">
+          {value}
+          {delta !== undefined && <Delta delta={delta} invert={deltaInvert} title={deltaTitle} />}
+        </div>
       </div>
       {sublabel && <div className="text-xs text-slate-500 mt-1">{sublabel}</div>}
     </div>
