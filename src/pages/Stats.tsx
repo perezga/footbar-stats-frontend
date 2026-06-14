@@ -44,9 +44,9 @@ function AdvancedInsights() {
             tooltip="Tus goles respecto al total de goles marcados por tu equipo esta temporada."
           />
           <StatTile
-            label="Factor Clutch (75'+)"
+            label="Factor Clutch"
             value={adv.clutch_factor_pct !== null ? `${adv.clutch_factor_pct.toFixed(0)}%` : '—'}
-            tooltip="Porcentaje de tus goles marcados en los últimos 15 minutos de partido."
+            tooltip="Porcentaje de tus goles marcados en el último tramo del partido (último cuarto)."
           />
           <StatTile
             label="Disciplina (min/tarjeta)"
