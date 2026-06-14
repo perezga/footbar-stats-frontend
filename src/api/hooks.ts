@@ -75,7 +75,15 @@ export function useRefreshSessions() {
   });
 }
 
-export function useSession(id: number, enabled: boolean) {
+export function useRefreshRfaf() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (season: string) => api<{ ok: true }>(`/api/rfaf/refresh${seasonQs(season)}`, { method: 'POST' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['rfaf'] }),
+  });
+}
+
+export function useSession(id: number | string, enabled: boolean) {
   const playerId = localStorage.getItem('activePlayerId');
   return useQuery({
     queryKey: ['session', id, playerId],
@@ -84,16 +92,13 @@ export function useSession(id: number, enabled: boolean) {
   });
 }
 
-export function useRefreshSession(id: number) {
+export function useRefreshSession(id: number | string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => api<SessionDetail>(`/api/sessions/${id}/refresh`, { method: 'POST' }),
     onSuccess: (data) => {
       qc.setQueryData(['session', id], data);
       qc.invalidateQueries({ queryKey: ['sessions'] });
-      qc.invalidateQueries({ queryKey: ['records'] });
-      qc.invalidateQueries({ queryKey: ['trends'] });
-      qc.invalidateQueries({ queryKey: ['level'] });
     },
   });
 }
@@ -110,10 +115,14 @@ export function useLevel(enabled: boolean) {
 
 export function useRecords(matchType: MatchType | undefined, enabled: boolean) {
   const playerId = localStorage.getItem('activePlayerId');
-  const qs = matchType ? `?match_type=${matchType}` : '';
+  const params = new URLSearchParams();
+  if (matchType) params.set('match_type', matchType);
   return useQuery({
     queryKey: ['records', matchType ?? 'all', playerId],
-    queryFn: () => api<{ records: RecordEntry[] }>(`/api/stats/records${qs}`),
+    queryFn: () =>
+      api<{ match_type: MatchType | null; records: RecordEntry[] }>(
+        `/api/stats/records?${params.toString()}`,
+      ),
     enabled,
   });
 }
@@ -191,12 +200,11 @@ export function usePlayerStats(enabled: boolean, season = '') {
   });
 }
 
-export function useRefreshRfaf() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (season: string) =>
-      api<{ ok: true }>(`/api/rfaf/refresh${seasonQs(season)}`, { method: 'POST' }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['rfaf'] }),
+export function useRfafSearch(query: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['rfaf-search', query],
+    queryFn: () => api<RfafSearchResult[]>(`/api/rfaf/search?q=${encodeURIComponent(query)}`),
+    enabled: enabled && query.length >= 3,
   });
 }
 
@@ -218,14 +226,6 @@ export function usePlayers() {
   return useQuery({
     queryKey: ['players'],
     queryFn: () => api<Player[]>('/api/players'),
-  });
-}
-
-export function useRfafSearch(query: string, enabled: boolean) {
-  return useQuery({
-    queryKey: ['rfaf-search', query],
-    queryFn: () => api<RfafSearchResult[]>(`/api/rfaf/search?q=${encodeURIComponent(query)}`),
-    enabled: enabled && query.length >= 3,
   });
 }
 

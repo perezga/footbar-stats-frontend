@@ -10,7 +10,13 @@ import {
   PlayerEventsInline,
 } from '../components/MatchResult.js';
 import { MatchTypeFilter } from '../components/MatchTypeFilter.js';
-import { formatDateTime, formatKickoff, MATCH_TYPE_LABEL, positionLabel } from '../lib/units.js';
+import {
+  formatDateTime,
+  formatKickoff,
+  madridDateKey,
+  MATCH_TYPE_LABEL,
+  positionLabel,
+} from '../lib/units.js';
 
 const PAGE_SIZE = 25;
 
@@ -118,18 +124,15 @@ export function Sessions() {
               </div>
             </>
           );
-          return s.id !== null ? (
+          const sessionId = s.id !== null ? String(s.id) : `date:${madridDateKey(s.start_date)}`;
+          return (
             <Link
-              key={s.id}
-              to={`/sessions/${s.id}`}
+              key={sessionId}
+              to={`/sessions/${sessionId}`}
               className="block px-4 py-3 hover:bg-slate-800/40"
             >
               {content}
             </Link>
-          ) : (
-            <div key={`fixture-${s.start_date}`} className="block px-4 py-3">
-              {content}
-            </div>
           );
         })}
         {q.data?.results.length === 0 && (

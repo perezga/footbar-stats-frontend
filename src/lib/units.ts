@@ -110,6 +110,13 @@ const madridDate = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 });
 
+/** ISO datetime → 'YYYY-MM-DD' in Europe/Madrid (avoids UTC date-roll at night). */
+export function madridDateKey(startDate: string): string | null {
+  const d = new Date(startDate);
+  if (Number.isNaN(d.getTime())) return null;
+  return madridDate.format(d); // en-CA yields YYYY-MM-DD
+}
+
 /** Calendar days from today (Madrid) to a fixture date 'YYYY-MM-DD'. */
 export function daysUntil(date: string): number {
   const today = madridDate.format(new Date()); // en-CA yields YYYY-MM-DD

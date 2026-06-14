@@ -21,10 +21,12 @@ import {
 
 export function SessionDetail() {
   const { id } = useParams<{ id: string }>();
+  const q = useSession(id!, !!id);
   const sessionId = Number(id);
-  const q = useSession(sessionId, Number.isFinite(sessionId));
-  const refresh = useRefreshSession(sessionId);
-  const avg = useAverages(q.data?.match_type ?? '11', sessionId, !!q.data);
+  const isNumeric = Number.isFinite(sessionId);
+  
+  const refresh = useRefreshSession(isNumeric ? sessionId : 0);
+  const avg = useAverages(q.data?.match_type ?? '11', isNumeric ? sessionId : 0, !!q.data && isNumeric);
 
   if (q.isLoading) return <div className="text-slate-400">Loading…</div>;
   if (q.error) return <ErrorAlert error={q.error} onRetry={() => q.refetch()} />;
@@ -53,15 +55,17 @@ export function SessionDetail() {
           <Link to="/sessions" className="text-sm text-slate-400 hover:text-slate-200">
             ← All sessions
           </Link>
-          <button
-            type="button"
-            onClick={() => refresh.mutate()}
-            disabled={refresh.isPending}
-            className="px-3 py-1 rounded-md border border-slate-700 text-sm hover:border-slate-500 disabled:opacity-50"
-            title="Delete the cached data for this session and re-fetch it from Footbar"
-          >
-            {refresh.isPending ? 'Refreshing…' : '↻ Refresh'}
-          </button>
+          {isNumeric && (
+            <button
+              type="button"
+              onClick={() => refresh.mutate()}
+              disabled={refresh.isPending}
+              className="px-3 py-1 rounded-md border border-slate-700 text-sm hover:border-slate-500 disabled:opacity-50"
+              title="Delete the cached data for this session and re-fetch it from Footbar"
+            >
+              {refresh.isPending ? 'Refreshing…' : '↻ Refresh'}
+            </button>
+          )}
         </div>
         {refresh.error && (
           <div className="mt-2">
@@ -138,6 +142,51 @@ export function SessionDetail() {
           delta={delta('activity', s.activity)}
           deltaTitle={deltaTitle}
         />
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold text-slate-100 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-brand"></span>
+          Match Insights (Pro)
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <StatTile
+            label="Efectividad de Tiro"
+            value={(() => {
+              const goals = s.fixture?.events.filter((e) => e.kind === 'goal').length ?? 0;
+              return s.shot_count > 0 ? `${((goals / s.shot_count) * 100).toFixed(1)}%` : '—';
+            })()}
+            tooltip="Tus goles marcados divididos por el total de tiros registrados por el tracker."
+          />
+          <StatTile
+            label="Resistencia Fatiga"
+            value={(() => {
+              if (!s.distance_5min || s.distance_5min.length < 4) return '—';
+              const mid = Math.floor(s.distance_5min.length / 2);
+              const dist1 = s.distance_5min.slice(0, mid).reduce((sum, b) => sum + b.low + b.normal + b.high, 0);
+              const dist2 = s.distance_5min.slice(mid).reduce((sum, b) => sum + b.low + b.normal + b.high, 0);
+              return dist1 > 0 ? `${((dist2 / dist1) * 100).toFixed(0)}%` : '—';
+            })()}
+            tooltip="Ratio de intensidad física en la 2ª parte vs la 1ª parte de este partido."
+          />
+          <StatTile
+            label="Luka Modrić Score"
+            value={(() => {
+              if (s.id === null) return '—'; // No tracker data
+              const goals = s.fixture?.events.filter((e) => e.kind === 'goal').length ?? 0;
+              return (s.pass_count / 5 + s.distance / 1000 - goals * 5).toFixed(1);
+            })()}
+            tooltip="Índice que premia la distribución y el esfuerzo físico, penalizando el individualismo."
+          />
+          <StatTile
+            label="Km por Gol"
+            value={(() => {
+              const goals = s.fixture?.events.filter((e) => e.kind === 'goal').length ?? 0;
+              return goals > 0 ? (s.distance / 1000 / goals).toFixed(1) : '—';
+            })()}
+            tooltip="Kilómetros recorridos por cada gol marcado."
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

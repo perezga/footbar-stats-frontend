@@ -97,15 +97,15 @@ export function FixtureLegLine({ leg }: { leg: FixtureLeg }) {
       </span>
     </div>
   );
-  return leg.sessionId !== null ? (
+  const linkTo = leg.sessionId !== null ? `/sessions/${leg.sessionId}` : `/sessions/date:${f.date}`;
+
+  return (
     <Link
-      to={`/sessions/${leg.sessionId}`}
+      to={linkTo}
       className="-mx-2 block rounded-md px-2 hover:bg-slate-800/40"
     >
       {content}
     </Link>
-  ) : (
-    content
   );
 }
 
