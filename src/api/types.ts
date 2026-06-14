@@ -325,4 +325,9 @@ export interface AdvancedMetrics {
   workrate_win_pct: number | null;
   luka_modric_score: number | null;
   intensity_vs_rank_ratio: number | null;
+  // Summary Performance
+  top_speed: number | null;
+  avg_distance: number | null;
+  avg_sprints: number | null;
+  top_shot_power: number | null;
 }

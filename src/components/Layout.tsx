@@ -7,6 +7,7 @@ const tabs = [
   { to: '/sessions', label: 'Sessions' },
   { to: '/stats', label: 'Stats' },
   { to: '/league', label: 'League' },
+  { to: '/compare', label: 'Compare' },
   { to: '/settings', label: 'Settings' },
 ];
 

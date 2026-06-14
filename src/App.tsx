@@ -1,6 +1,5 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
-import { useAuthStatus } from './api/hooks.js';
 import { usePlayerContext } from './api/PlayerContext.js';
 import { Layout } from './components/Layout.js';
 import { Login } from './pages/Login.js';
@@ -14,6 +13,9 @@ const SessionDetail = lazy(() =>
 );
 const Stats = lazy(() => import('./pages/Stats.js').then((m) => ({ default: m.Stats })));
 const League = lazy(() => import('./pages/League.js').then((m) => ({ default: m.League })));
+const Comparison = lazy(() =>
+  import('./pages/Comparison.js').then((m) => ({ default: m.Comparison })),
+);
 const PlayerSettings = lazy(() =>
   import('./pages/PlayerSettings.js').then((m) => ({ default: m.PlayerSettings })),
 );
@@ -47,6 +49,7 @@ export default function App() {
           <Route path="sessions/:id" element={<SessionDetail />} />
           <Route path="stats" element={<Stats />} />
           <Route path="league" element={<League />} />
+          <Route path="compare" element={<Comparison />} />
           <Route path="settings" element={<PlayerSettings />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

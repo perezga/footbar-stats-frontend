@@ -7,8 +7,12 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const playerId = localStorage.getItem('activePlayerId');
+export async function api<T>(
+  path: string,
+  init: RequestInit & { playerId?: number | null } = {},
+): Promise<T> {
+  const playerId =
+    init.playerId !== undefined ? init.playerId : localStorage.getItem('activePlayerId');
   const headers = new Headers(init.headers);
   if (playerId) {
     headers.set('x-player-id', playerId);

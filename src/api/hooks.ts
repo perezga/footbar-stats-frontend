@@ -31,10 +31,10 @@ export function useAuthStatus() {
   });
 }
 
-export function useProfile(enabled: boolean) {
+export function useProfile(enabled: boolean, playerId?: number | null) {
   return useQuery({
-    queryKey: ['profile'],
-    queryFn: () => api<Profile>('/api/profile'),
+    queryKey: ['profile', playerId],
+    queryFn: () => api<Profile>('/api/profile', { playerId }),
     enabled,
   });
 }
@@ -78,7 +78,8 @@ export function useRefreshSessions() {
 export function useRefreshRfaf() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (season: string) => api<{ ok: true }>(`/api/rfaf/refresh${seasonQs(season)}`, { method: 'POST' }),
+    mutationFn: (season: string) =>
+      api<{ ok: true }>(`/api/rfaf/refresh${seasonQs(season)}`, { method: 'POST' }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['rfaf'] }),
   });
 }
@@ -104,11 +105,11 @@ export function useRefreshSession(id: number | string) {
 }
 
 /** Player level derived from the last matches (see the profile banner). */
-export function useLevel(enabled: boolean) {
-  const playerId = localStorage.getItem('activePlayerId');
+export function useLevel(enabled: boolean, playerId?: number | null) {
+  const resolvedId = playerId ?? localStorage.getItem('activePlayerId');
   return useQuery({
-    queryKey: ['level', playerId],
-    queryFn: () => api<LevelResponse>('/api/stats/level'),
+    queryKey: ['level', resolvedId],
+    queryFn: () => api<LevelResponse>('/api/stats/level', { playerId }),
     enabled,
   });
 }
@@ -150,11 +151,11 @@ export function useAverages(matchType: MatchType, excludeId: number, enabled: bo
   });
 }
 
-export function useAdvancedMetrics() {
-  const playerId = localStorage.getItem('activePlayerId');
+export function useAdvancedMetrics(playerId?: number | null) {
+  const resolvedId = playerId ?? localStorage.getItem('activePlayerId');
   return useQuery({
-    queryKey: ['advanced-metrics', playerId],
-    queryFn: () => api<AdvancedMetrics>('/api/stats/advanced'),
+    queryKey: ['advanced-metrics', resolvedId],
+    queryFn: () => api<AdvancedMetrics>('/api/stats/advanced', { playerId }),
   });
 }
 
@@ -168,10 +169,11 @@ export function useSeasons() {
   });
 }
 
-export function useStandings(enabled: boolean, season: string) {
+export function useStandings(enabled: boolean, season: string, playerId?: number | null) {
+  const resolvedId = playerId ?? localStorage.getItem('activePlayerId');
   return useQuery({
-    queryKey: ['rfaf', 'standings', season],
-    queryFn: () => api<RfafResponse<Standing>>(`/api/rfaf/standings${seasonQs(season)}`),
+    queryKey: ['rfaf', 'standings', season, resolvedId],
+    queryFn: () => api<RfafResponse<Standing>>(`/api/rfaf/standings${seasonQs(season)}`, { playerId }),
     enabled,
   });
 }
@@ -192,10 +194,12 @@ export function useFixtures(enabled: boolean, season: string) {
   });
 }
 
-export function usePlayerStats(enabled: boolean, season = '') {
+export function usePlayerStats(enabled: boolean, season = '', playerId?: number | null) {
+  const resolvedId = playerId ?? localStorage.getItem('activePlayerId');
   return useQuery({
-    queryKey: ['rfaf', 'player-stats', season],
-    queryFn: () => api<PlayerStatsResponse>(`/api/rfaf/player-stats${seasonQs(season)}`),
+    queryKey: ['rfaf', 'player-stats', season, resolvedId],
+    queryFn: () =>
+      api<PlayerStatsResponse>(`/api/rfaf/player-stats${seasonQs(season)}`, { playerId }),
     enabled,
   });
 }
